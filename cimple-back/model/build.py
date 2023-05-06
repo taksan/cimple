@@ -9,15 +9,14 @@ from pydantic import BaseModel
 class Build(BaseModel):
     task_id: int
     id: int
-    script: str
     output: Optional[str] = None
     status: str = 'started'
     exit_code: Optional[int] = None
-    created: datetime
+    created: str
     finished: Optional[datetime] = None
 
     def __init__(self, **data):
-        data['created'] = datetime.now()
+        data['created'] = datetime.now().isoformat()
         super().__init__(**data)
 
     def run(self):

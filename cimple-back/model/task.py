@@ -6,18 +6,17 @@ from pydantic import BaseModel
 
 from model.build import Build
 
-
 class Task(BaseModel):
     id: Optional[int] = None
     name: str
     image: Optional[str] = ""
     schedule: Optional[str] = None
     script: str
-    created: datetime
+    created: str
     builds: List[Build] = []
 
     def __init__(self, **data):
-        data['created'] = datetime.now()
+        data['created'] = datetime.now().isoformat()
         super().__init__(**data)
 
     def trigger(self) -> Build:
@@ -27,11 +26,7 @@ class Task(BaseModel):
         return build
 
     def complete(self, build_id: int, output: str, exit_code: int):
-        print(f"build_id {build_id}")
-        print(self.builds)
-        print("------------")
         if build_id < 0 or build_id >= len(self.builds):
-            print("------------oooooooooooooooo")
             raise HTTPException(status_code=404, detail="Build not found")
 
         self.builds[build_id].complete(output, exit_code)

@@ -10,6 +10,9 @@ class TaskRepo:
         self.current_task_id = 0
         self.task_list: Dict[int, Task] = {}
 
+    def list(self) -> Dict[int, Task]:
+        return self.task_list.copy()
+
     def add(self, task: Task):
         self.current_task_id += 1
         task.id = self.current_task_id

@@ -1,16 +1,19 @@
+import os
+
 from fastapi import FastAPI, UploadFile, File, Query, Response
 
 from local_repo import TaskRepo
 from model.task import Task
+from remote_repo import RemoteRepo
 
 app = FastAPI()
 
-task_repo = TaskRepo()
+task_repo = TaskRepo() if os.environ.get("STORE_DOMAIN") is None else RemoteRepo()
 
 
 @app.get("/tasks")
 async def get_tasks():
-    return task_repo.task_list
+    return task_repo.list()
 
 
 @app.post("/tasks")
@@ -46,7 +49,11 @@ async def delete_task(task_id: int):
 
 @app.post("/tasks/{task_id}/trigger")
 async def trigger_task(task_id: int):
-    build = task_repo.get(task_id).trigger()
+    task = task_repo.get(task_id)
+    build = task.trigger()
+
+    print(task.builds)
+    task_repo.update(task_id, task)
 
     response_data = {
         "id": task_id,
@@ -59,5 +66,7 @@ async def trigger_task(task_id: int):
 @app.post("/tasks/{task_id}/builds/{build_id}")
 async def build_completed(task_id: int, build_id: int, exit_code: int = Query(...), file: UploadFile = File(...)):
     log_output = await file.read()
-    task_repo.get(task_id).complete(build_id, log_output, exit_code)
+    task = task_repo.get(task_id)
+    task.complete(build_id, log_output, exit_code)
+    task_repo.update(task_id, task)
 
