@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI, UploadFile, File, Query, Response
+from fastapi.middleware.cors import CORSMiddleware
 
 from local_repo import TaskRepo
 from model.task import Task
@@ -9,6 +10,17 @@ from remote_repo import RemoteRepo
 app = FastAPI()
 
 task_repo = TaskRepo() if os.environ.get("STORE_DOMAIN") is None else RemoteRepo()
+
+origins = [ "*" ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 @app.get("/tasks")
