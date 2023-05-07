@@ -1,0 +1,27 @@
+<h2>Task List</h2>
+
+<div>
+  <a href="create-task" class="btn btn-primary">Create Task</a>
+</div>
+
+<table class="table table-hover task-list">
+  <thead>
+    <tr class="table-dark">
+      <th scope="col">Task</th>
+      <th scope="col">Created</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let task of taskList" class="table-light">
+      <td>{{ task.name }}</td>
+      <td>{{ task.created | date:"dd/MM/yy hh:mm" }}</td>
+      <td><a class="action" href="update-task/{{ task.id }}" title="edit">✎</a>
+        <a class="action" href="#" (click)="triggerTask(task.id)" title="run">▶</a>
+        <a class="action" href="builds/{{ task.id }}" title="builds">🚜</a>
+        <a class="action" href="#" title="remove">🗑️</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<app-toaster #toaster></app-toaster>

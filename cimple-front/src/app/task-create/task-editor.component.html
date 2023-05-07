@@ -1,0 +1,58 @@
+<h2>{{ title }}</h2>
+<form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+  <fieldset>
+    <div class="form-group">
+      <label for="name" class="form-label mt-4">Task Name</label>
+      <input type="text" class="form-control" id="name" placeholder="Task Name" formControlName="name"
+             [className]="classFor('script')">
+      <div *ngIf="taskForm.get('name')?.invalid && taskForm.get('name')?.touched" class="invalid-feedback">
+        Name is required
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="image" class="form-label mt-4">Container Image</label>
+      <input type="text" class="form-control" id="image" placeholder="Container Image" formControlName="image">
+      <small id="imageHelp" class="form-text text-muted">
+        The name of the image that will be used to run the task (default: busybox)
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="schedule" class="form-label mt-4">Schedule</label>
+      <input type="text" class="form-control" id="schedule" placeholder="Schedule" formControlName="schedule">
+      <small id="scheduleHelp" class="form-text text-muted">
+        The crontab like schedule to trigger the task
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="script" class="form-label mt-4">Task Script</label>
+      <textarea class="form-control" id="script" rows="8" formControlName="script"
+                [className]="classFor('script')"></textarea>
+      <small id="scriptHelp" class="form-text text-muted">
+        A shell script that will be executed
+      </small>
+      <div *ngIf="taskForm.get('script')?.invalid && taskForm.get('script')?.touched" class="invalid-feedback">
+        Script is required
+      </div>
+    </div>
+
+    <fieldset class="form-group row">
+      <legend class="mt-4">Resources</legend>
+
+      <label for="memory" class="col-sm-2 col-form-label" min="10" max="1000" step="10">
+        Memory {{ taskForm.get("memory")?.value }}
+      </label>
+      <div class="col-sm-2">
+        <input type="range" class="form-range" id="memory" formControlName="memory">
+      </div>
+
+      <label for="CPU" class="col-sm-2 form-label">CPU</label>
+      <div class="col-sm-2">
+        <input type="range" class="form-range" min="0.1" max="2" step="0.1" id="CPU">
+      </div>
+    </fieldset>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </fieldset>
+</form>

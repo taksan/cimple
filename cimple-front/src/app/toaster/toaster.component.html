@@ -1,0 +1,12 @@
+<div [class]="toastClass()" role="alert" aria-live="assertive" aria-atomic="true">
+  <div class="toast-header">
+    <strong class="me-auto">Bootstrap</strong>
+    <small>{{ header }}</small>
+    <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close">
+      <span aria-hidden="true"></span>
+    </button>
+  </div>
+  <div class="toast-body">
+    {{ message }}
+  </div>
+</div>
