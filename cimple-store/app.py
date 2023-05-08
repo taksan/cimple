@@ -1,11 +1,11 @@
-import json
+import base64
+import logging
 import os
 from typing import Dict
 
-from fastapi import FastAPI, File, HTTPException, Query, Request, Response, UploadFile
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import base64
-import logging
+from fastapi import FastAPI, Request, Response
+
+from store import Repo
 
 # Configure the logger
 logging.basicConfig(
@@ -14,10 +14,9 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-current_task_id = 0
-task_repo_cache = None
-
+tasks_repo = Repo(os.environ.get("DB_FILE", "tasks.json"))
 app = FastAPI()
+
 
 def authenticate(username, password):
     correct_username = os.environ.get("STORE_USER")
@@ -43,67 +42,44 @@ async def basic_auth_middleware(request: Request, call_next):
     return response
 
 
-def get_repo():
-    global task_repo_cache
-    if task_repo_cache is None:
-        if os.path.exists("tasks.json"):
-            with open("tasks.json", "r") as f:
-                task_repo_cache = json.load(f)
-            global current_task_id
-            current_task_id = max([int(k) for k in task_repo_cache.keys()])
-        else:
-            task_repo_cache = {}
-            save_repo()
-    return task_repo_cache
-
-def save_repo():
-    with open("tasks.json", "w") as f:
-        f.write(json.dumps(task_repo_cache))
-
 @app.get("/tasks")
 async def get_tasks():
-    return get_repo()
+    global tasks_repo
+    return tasks_repo.list()
 
 
 @app.post("/tasks")
 async def create_task(task: Dict):
-    tasks_repo = get_repo()
-    global current_task_id
-    current_task_id+=1
-    task['id'] = str(current_task_id)
-    tasks_repo[current_task_id] = task
-    save_repo()
-    logging.info(f"New task {current_task_id} created")
+    global tasks_repo
+    tasks_repo += task
+    logging.info(f"New task {task['id']} created")
     return task
 
 
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: str):
-    tasks_repo = get_repo()
+    global tasks_repo
     if task_id not in tasks_repo:
         return Response(status_code=404)
 
-    return tasks_repo.get(task_id)
+    return tasks_repo[task_id]
 
 
 @app.put("/tasks/{task_id}")
 async def update_task(task_id: str, updated_task: Dict):
-    tasks_repo = get_repo()
+    global tasks_repo
     if task_id not in tasks_repo:
         return Response(status_code=404)
 
-    print(updated_task)
     updated_task['id'] = task_id
     tasks_repo[task_id] = updated_task
-    save_repo()
     logging.info(f"Task {task_id} updated")
 
 
 @app.delete("/tasks/{task_id}")
 async def delete_task(task_id: str):
-    tasks_repo = get_repo()
+    global tasks_repo
     if task_id not in tasks_repo:
         return Response(status_code=404)
     del tasks_repo[task_id]
-    save_repo()
-
+    logging.info(f"Task {task_id} removed")
