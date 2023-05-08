@@ -3,8 +3,16 @@ import json
 import os
 
 import requests
+from fastapi import HTTPException
+from requests import Response
 
 from model.task import Task
+
+
+def handle_errors(response: Response):
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Task not found")
+    response.raise_for_status()
 
 
 class RemoteRepo:
@@ -20,7 +28,7 @@ class RemoteRepo:
 
     def list(self):
         response = requests.get(f"{self.repo_url}/tasks", headers=self.headers)
-        response.raise_for_status()
+        handle_errors(response)
         task_list = {}
         remote_tasks = response.json()
         for task in remote_tasks.values():
@@ -34,14 +42,15 @@ class RemoteRepo:
 
     def get(self, task_id: int) -> Task:
         response = requests.get(f"{self.repo_url}/tasks/{task_id}", headers=self.headers)
-        response.raise_for_status()
+        handle_errors(response)
+
         return Task.parse_obj(response.json())
 
     def delete(self, task_id: int):
         requests.delete(f"{self.repo_url}/tasks/{task_id}", headers=self.headers)
 
     def update(self, task_id: int, updated_task: Task):
-        x = json.loads(updated_task.json())
-        response = requests.put(f"{self.repo_url}/tasks/{task_id}", json=x, headers=self.headers)
-        response.raise_for_status()
-
+        # This conversion forces updated_task to be json serializable
+        canonized = json.loads(updated_task.json())
+        response = requests.put(f"{self.repo_url}/tasks/{task_id}", json=canonized, headers=self.headers)
+        handle_errors(response)

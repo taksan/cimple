@@ -29,9 +29,8 @@ class TaskRepo:
     def update(self, task_id: int, updated_task: Task):
         self.validate_task_exists(task_id)
 
-        for key in ['name', 'image', 'schedule', 'script']:
-            if key in updated_task:
-                setattr(self.task_list[task_id], key, updated_task[key])
+        updated_task.id = task_id
+        self.task_list[task_id] = updated_task
 
     def validate_task_exists(self, task_id: int):
         if task_id not in self.task_list:

@@ -11,7 +11,7 @@ app = FastAPI()
 
 task_repo = TaskRepo() if os.environ.get("STORE_DOMAIN") is None else RemoteRepo()
 
-origins = [ "*" ]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,7 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 @app.get("/tasks")
@@ -57,6 +56,7 @@ async def update_task(task_id: int, updated_task: Task):
 @app.delete("/tasks/{task_id}")
 async def delete_task(task_id: int):
     task_repo.delete(task_id)
+    return {'taskId': task_id, 'detail': 'removal succeeded'}
 
 
 @app.post("/tasks/{task_id}/trigger")
@@ -68,8 +68,9 @@ async def trigger_task(task_id: int):
     task_repo.update(task_id, task)
 
     response_data = {
-        "id": task_id,
-        "build": build
+        "taskId": task_id,
+        "buildNumber": build.id,
+        "task": task.name
     }
 
     return response_data
@@ -81,4 +82,3 @@ async def build_completed(task_id: int, build_id: int, exit_code: int = Query(..
     task = task_repo.get(task_id)
     task.complete(build_id, log_output, exit_code)
     task_repo.update(task_id, task)
-
