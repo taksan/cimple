@@ -29,13 +29,13 @@ export class TaskEditorComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      if (params['id']) {
-        this.currentTaskId = params['id']
-        this.title = "Task Update"
-        this.taskService.get(params['id']).subscribe(r => {
-          this.taskForm.patchValue(r)
-        })
-      }
+      if (!params['id'])
+        return
+      this.currentTaskId = params['id']
+      this.title = "Task Update"
+      this.taskService.get(params['id']).subscribe(task => {
+        this.taskForm.patchValue(task)
+      })
     })
   }
   onSubmit() {

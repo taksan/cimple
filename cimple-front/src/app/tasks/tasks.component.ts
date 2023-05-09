@@ -4,6 +4,7 @@ import {TaskService} from "../task.service";
 import {TaskBuildResponse} from "../model/task-build-response";
 import {TaskDeleteResponse} from "../model/task-delete-response";
 import {ToasterService} from "../toaster/toaster.service";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'app-tasks',
@@ -14,7 +15,8 @@ export class TasksComponent implements OnInit {
   taskList: Task[] = [];
 
   constructor(private taskService: TaskService,
-              private toaster: ToasterService) {
+              private toaster: ToasterService,
+              private router: Router) {
   }
 
   ngOnInit(): void {
@@ -23,8 +25,8 @@ export class TasksComponent implements OnInit {
 
   private updateTasks() {
     this.taskService.list().subscribe({
-      next: (tasks: Map<string, Task>) => {
-        this.taskList = Object.values(tasks)
+      next: (tasks: Task[]) => {
+        this.taskList = tasks
       },
       error: (err) => {
         console.log(err)
@@ -38,26 +40,46 @@ export class TasksComponent implements OnInit {
     this.taskService.trigger(task_id).subscribe({
       next: (response: TaskBuildResponse) => {
         this.toaster.success(
-          'Task triggered',
+          'Task started',
           `Build #${response.buildNumber} for task '${response.task}' started`) }
       ,
       error: (err) => {
-        this.toaster.error('Task trigger failed', err.message)
+        this.toaster.error('Task start failed', err.message)
       }
     })
   }
 
   deleteTask(task: Task) {
+    if (!confirm(`This will remove task ${task.name}. Are you sure?`))
+      return
+
     this.taskService.delete(task).subscribe({
-      next: (response: TaskDeleteResponse) => {
+      next: (_response: TaskDeleteResponse) => {
         this.updateTasks()
         this.toaster.success(
           'Task removed',
-          `Task #${response.taskId} completed`) }
+          `Task '${task.name}' removal completed`) }
       ,
       error: (err) => {
         this.toaster?.error('Task removal failed', err.message)
       }
     })
+  }
+
+  public taskClass(task: Task): string {
+    switch (task.status()) {
+      case 'running': return 'table-info'
+      case 'succeeded': return 'table-success'
+      case 'failed': return 'table-danger'
+    }
+    return "table-light"
+  }
+
+  async showBuilds(task: Task) {
+    return this.router.navigate(["builds", task.id])
+  }
+
+  async editTask(task: Task) {
+    return this.router.navigate(["update-task", task.id])
   }
 }

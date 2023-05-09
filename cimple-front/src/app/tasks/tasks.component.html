@@ -13,14 +13,14 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let task of taskList" class="table-light">
-      <td><a class="action" href="builds/{{ task.id }}" title="builds">{{ task.name }}</a></td>
-      <td>{{ task.created | date:"dd/MM/yy hh:mm" }}</td>
+    <tr *ngFor="let task of taskList" [class]="taskClass(task)">
+      <td (click)="showBuilds(task)" class="cimple-clickable">{{ task.name }}</td>
+      <td (click)="showBuilds(task)" class="cimple-clickable">{{ task.created | date:"dd/MM/yy hh:mm" }}</td>
       <td>
-        <a class="action" href="update-task/{{ task.id }}" title="edit">✎</a>
-        <a class="action" href="#" (click)="triggerTask(task.id)" title="run">▶</a>
-        <a class="action" href="builds/{{ task.id }}" title="builds">🚜</a>
-        <a class="action" href="#" title="remove" (click)="deleteTask(task)">🗑️</a>
+        <a class="action" (click)="editTask(task)" title="edit">✎</a>
+        <a class="action" (click)="triggerTask(task.id)" title="run">▶</a>
+        <a class="action" (click)="showBuilds(task)" title="builds">🚜</a>
+        <a class="action" (click)="deleteTask(task)" title="remove">🗑️</a>
       </td>
     </tr>
   </tbody>

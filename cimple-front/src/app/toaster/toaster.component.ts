@@ -25,7 +25,7 @@ export class ToasterComponent {
   }
 
   toastClass(type: string) {
-    return `toast-alert alert alert-dismissible alert-${type}`
+    return `cimple-alert alert alert-dismissible alert-${type}`
   }
 }
 

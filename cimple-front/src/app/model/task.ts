@@ -8,13 +8,13 @@ export class Task {
   script: string = ""
   created: Date| null | undefined = null
   builds: Build[] | null | undefined  = [];
-  memory: string= ""
-  cpu: string = ""
+  memory: string= "10"
+  cpu: string = "0.1"
 
-  constructor(name: string,
-              image: string| null,
-              schedule: string| null,
-              script: string,
+  constructor(name: string = "",
+              image: string| null = null,
+              schedule: string| null = null,
+              script: string = "",
               memory: string = "10",
               cpu: string = "0.1") {
     this.name = name
@@ -23,5 +23,17 @@ export class Task {
     this.script = script
     this.memory = memory+"Mi"
     this.cpu = cpu
+  }
+
+  status(): "none" | "running" | "succeeded" | "failed" {
+    if (!this.builds || this.builds.length == 0)
+      return "none"
+    return this.builds[this.builds.length-1].execStatus()
+  }
+
+  static from(t: Task) {
+    let newInstance: Task = Object.assign(new Task(), t)
+    newInstance.builds = newInstance.builds?.map(b => Object.assign(new Build(), b))
+    return newInstance;
   }
 }

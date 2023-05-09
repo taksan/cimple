@@ -1,4 +1,4 @@
-<div class="toast-container">
+<div class="cimple-alert-container">
   <div *ngFor="let toast of toasts" [class]="toastClass(toast.type)">
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     <strong>{{ toast.header }}</strong><br> {{ toast.message }}

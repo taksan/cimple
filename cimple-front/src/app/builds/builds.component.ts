@@ -21,16 +21,16 @@ export class BuildsComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      if (params['id']) {
-        this.taskService.get(params['id']).subscribe({
-          next: task => {
-            this.currentTask = task
-          },
-          error: (err) => {
-            this.toaster.error("Failed to load task builds", err.message)
-          }
-        })
-      }
+      if (!params['id'])
+        return
+      this.taskService.get(params['id']).subscribe({
+        next: task => {
+          this.currentTask = task
+        },
+        error: (err) => {
+          this.toaster.error("Failed to load task builds", err.message)
+        }
+      })
     })
   }
 
@@ -40,22 +40,19 @@ export class BuildsComponent implements OnInit {
 
   classFor(build: Build) {
     let additionalClass = "table-light"
-    if (this.statusOf(build) === "failed")
-      additionalClass = "table-danger"
-    if (this.statusOf(build) === "running")
-      additionalClass = "table-info"
-    if (this.statusOf(build) === "succeeded")
-          additionalClass = "table-success"
+    switch (build.execStatus()) {
+      case "failed":
+        additionalClass = "table-danger"
+        break
+      case "running":
+        additionalClass = "table-info"
+        break
+      case "succeeded":
+        additionalClass = "table-success";
+        break
+    }
     if (build === this.selectedBuild)
       additionalClass = "table-active"
     return `selectable ${additionalClass}`;
-  }
-
-  statusOf(build: Build) {
-    if (build.exit_code === null || build.exit_code === undefined)
-      return "running";
-    if (build.exit_code === 0)
-      return "succeeded";
-    return "failed";
   }
 }

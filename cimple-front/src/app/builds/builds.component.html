@@ -14,7 +14,7 @@
       <tr *ngFor="let build of currentTask?.builds?.reverse()" [class]="classFor(build)" (click)="selectBuild(build)">
         <td># {{ build.id }}</td>
         <td>{{ build.finished | date:"dd/MM/yy hh:mm" }}</td>
-        <td>{{ statusOf(build) }}</td>
+        <td>{{ build.execStatus() }}</td>
       </tr>
       </tbody>
     </table>
