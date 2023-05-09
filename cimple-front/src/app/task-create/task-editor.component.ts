@@ -3,6 +3,7 @@ import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {TaskService} from "../task.service";
 import {Task} from "../model/task";
 import {ActivatedRoute, Router} from "@angular/router";
+import {ToasterService} from "../toaster/toaster.service";
 
 @Component({
   selector: 'app-task-create',
@@ -15,13 +16,15 @@ export class TaskEditorComponent implements OnInit {
     image: new FormControl(''),
     schedule: new FormControl(''),
     script: new FormControl('', Validators.required),
-    memory: new FormControl(''),
+    memory: new FormControl('50'),
+    cpu: new FormControl('0.1'),
   })
   title = "Task Creation"
   currentTaskId: number | null = null
   constructor(private taskService: TaskService,
               private router: Router,
-              private route: ActivatedRoute) {
+              private route: ActivatedRoute,
+              private toaster: ToasterService) {
   }
 
   ngOnInit() {
@@ -50,7 +53,7 @@ export class TaskEditorComponent implements OnInit {
       this.taskService.update(this.currentTaskId, task).subscribe( {
         next: _r => this.router.navigate(['/']).then(),
         error: e => {
-          console.error(e)
+          this.toaster.error('Update failed', e.message)
         }
       })
     }
@@ -58,7 +61,7 @@ export class TaskEditorComponent implements OnInit {
       this.taskService.create(task).subscribe( {
         next: _r => this.router.navigate(['/']).then(),
         error: e => {
-          console.error(e)
+          this.toaster.error('Creation failed', e.message)
         }
       })
     }

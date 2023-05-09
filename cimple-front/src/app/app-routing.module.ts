@@ -3,6 +3,7 @@ import {RouterModule, Routes} from '@angular/router';
 import {TasksComponent} from "./tasks/tasks.component";
 import {TaskEditorComponent} from "./task-create/task-editor.component";
 import {BuildsComponent} from "./builds/builds.component";
+import {ToasterComponent} from "./toaster/toaster.component";
 
 const routes: Routes = [
   {path: '', component: TasksComponent},

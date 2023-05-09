@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Task} from "./model/task";
 import {Observable} from "rxjs";
+import {TaskBuildResponse} from "./model/task-build-response";
+import {TaskDeleteResponse} from "./model/task-delete-response";
+
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +30,10 @@ export class TaskService {
   }
 
   trigger(task_id: string) {
-    return this.http.post(`http://localhost:8000/tasks/${task_id}/trigger`, null)
+    return this.http.post<TaskBuildResponse>(`http://localhost:8000/tasks/${task_id}/trigger`, null)
+  }
+
+  delete(task: Task) {
+    return this.http.delete<TaskDeleteResponse>(`http://localhost:8000/tasks/${task.id}`)
   }
 }

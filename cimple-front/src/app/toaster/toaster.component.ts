@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 
 @Component({
   selector: 'app-toaster',
@@ -6,19 +6,30 @@ import { Component } from '@angular/core';
   styleUrls: ['./toaster.component.scss']
 })
 export class ToasterComponent {
-  header: string = "";
-  message: string = ""
-  show: boolean = false;
+  toasts: Toast[] = []
 
-  showToast(header: string, message: string) {
-    this.header = header;
-    this.message = message;
-    this.show = true;
+  success(header: string, message: string) {
+    this.showToast(header, message, "success")
+  }
+
+  error(header: string, message: string) {
+    this.showToast(header, message, "danger")
+  }
+
+  showToast(header: string, message: string, type: string) {
+    this.toasts.push(new Toast(header, message, type))
+
     setTimeout(() => {
-        this.show = false;
+      this.toasts.shift()
     }, 5000);
   }
-  toastClass() {
-    return `toast ${this.show?'show':''}`
+
+  toastClass(type: string) {
+    return `toast-alert alert alert-dismissible alert-${type}`
+  }
+}
+
+class Toast {
+  constructor(public header: string, public message: string, public type: string) {
   }
 }

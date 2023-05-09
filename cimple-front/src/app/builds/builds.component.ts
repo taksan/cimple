@@ -3,6 +3,7 @@ import {Build} from "../model/build";
 import {TaskService} from "../task.service";
 import {ActivatedRoute} from "@angular/router";
 import {Task} from "../model/task";
+import {ToasterService} from "../toaster/toaster.service";
 
 @Component({
   selector: 'app-builds',
@@ -11,25 +12,29 @@ import {Task} from "../model/task";
 })
 export class BuildsComponent implements OnInit {
   currentTask: Task | null | undefined = null
-  selectedBuildLogs: string = "<select a build to see the logs>"
-  private selectedBuild: Build | null | undefined = null
+  public selectedBuild: Build | null | undefined = null
 
-  constructor(private taskService: TaskService, private route: ActivatedRoute) {
-
+  constructor(private taskService: TaskService,
+              private route: ActivatedRoute,
+              private toaster: ToasterService) {
   }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.taskService.get(params['id']).subscribe(task => {
-          this.currentTask = task
+        this.taskService.get(params['id']).subscribe({
+          next: task => {
+            this.currentTask = task
+          },
+          error: (err) => {
+            this.toaster.error("Failed to load task builds", err.message)
+          }
         })
       }
     })
   }
 
   selectBuild(build: Build) {
-    this.selectedBuildLogs = build.output || "<no output available>"
     this.selectedBuild = build
   }
 
