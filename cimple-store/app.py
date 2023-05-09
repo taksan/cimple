@@ -3,7 +3,9 @@ import logging
 import os
 from typing import Dict
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from store import Repo
 
@@ -16,6 +18,14 @@ logging.basicConfig(
 
 items_repo = Repo(os.environ.get("DB_FILE", "tasks.json"))
 app = FastAPI()
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    logging.error(f"{request}: {exc_str}")
+    content = {'status_code': 10422, 'message': exc_str, 'data': None}
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 def authenticate(username, password):
@@ -66,7 +76,7 @@ async def get_task(item_id: str):
     return items_repo[item_id]
 
 
-@app.put("/items/{task_id}")
+@app.put("/items/{item_id}")
 async def update_task(item_id: str, updated_item: Dict):
     global items_repo
     if item_id not in items_repo:
