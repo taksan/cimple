@@ -27,7 +27,7 @@ class RemoteRepo:
         self.headers = {'Content-Type': 'application/json', 'Authorization': f'Basic {repo_pass}'}
 
     def list(self):
-        response = requests.get(f"{self.repo_url}/tasks", headers=self.headers)
+        response = requests.get(f"{self.repo_url}/items", headers=self.headers)
         handle_errors(response)
         task_list = {}
         remote_tasks = response.json()
@@ -36,21 +36,21 @@ class RemoteRepo:
         return task_list
 
     def add(self, task: Task):
-        response = requests.post(f"{self.repo_url}/tasks", json=task.dict(), headers=self.headers)
+        response = requests.post(f"{self.repo_url}/items", json=task.dict(), headers=self.headers)
         response.raise_for_status()
         return Task.parse_obj(response.json())
 
     def get(self, task_id: int) -> Task:
-        response = requests.get(f"{self.repo_url}/tasks/{task_id}", headers=self.headers)
+        response = requests.get(f"{self.repo_url}/items/{task_id}", headers=self.headers)
         handle_errors(response)
 
         return Task.parse_obj(response.json())
 
     def delete(self, task_id: int):
-        requests.delete(f"{self.repo_url}/tasks/{task_id}", headers=self.headers)
+        requests.delete(f"{self.repo_url}/items/{task_id}", headers=self.headers)
 
     def update(self, task_id: int, updated_task: Task):
         # This conversion forces updated_task to be json serializable
         canonized = json.loads(updated_task.json())
-        response = requests.put(f"{self.repo_url}/tasks/{task_id}", json=canonized, headers=self.headers)
+        response = requests.put(f"{self.repo_url}/items/{task_id}", json=canonized, headers=self.headers)
         handle_errors(response)

@@ -27,6 +27,7 @@ class Repo:
         self.index += 1
         value['id'] = self.index
         self[str(self.index)] = value
+        return self
 
     def __setitem__(self, key, value):
         self.repo[str(key)] = value

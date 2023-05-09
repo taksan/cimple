@@ -14,7 +14,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-tasks_repo = Repo(os.environ.get("DB_FILE", "tasks.json"))
+items_repo = Repo(os.environ.get("DB_FILE", "tasks.json"))
 app = FastAPI()
 
 
@@ -42,44 +42,45 @@ async def basic_auth_middleware(request: Request, call_next):
     return response
 
 
-@app.get("/tasks")
-async def get_tasks():
-    global tasks_repo
-    return tasks_repo.list()
+@app.get("/items")
+async def get_items():
+    global items_repo
+    return items_repo.list()
 
 
-@app.post("/tasks")
-async def create_task(task: Dict):
-    global tasks_repo
-    tasks_repo += task
-    logging.info(f"New task {task['id']} created")
-    return task
+@app.post("/items")
+async def create_item(item: Dict):
+    global items_repo
+    items_repo += item
+    logging.info(f"New item {item['id']} created")
+
+    return item
 
 
-@app.get("/tasks/{task_id}")
-async def get_task(task_id: str):
-    global tasks_repo
-    if task_id not in tasks_repo:
+@app.get("/items/{item_id}")
+async def get_task(item_id: str):
+    global items_repo
+    if item_id not in items_repo:
         return Response(status_code=404)
 
-    return tasks_repo[task_id]
+    return items_repo[item_id]
 
 
-@app.put("/tasks/{task_id}")
-async def update_task(task_id: str, updated_task: Dict):
-    global tasks_repo
-    if task_id not in tasks_repo:
+@app.put("/items/{task_id}")
+async def update_task(item_id: str, updated_item: Dict):
+    global items_repo
+    if item_id not in items_repo:
         return Response(status_code=404)
 
-    updated_task['id'] = task_id
-    tasks_repo[task_id] = updated_task
-    logging.info(f"Task {task_id} updated")
+    updated_item['id'] = item_id
+    items_repo[item_id] = updated_item
+    logging.info(f"Item {item_id} updated")
 
 
-@app.delete("/tasks/{task_id}")
-async def delete_task(task_id: str):
-    global tasks_repo
-    if task_id not in tasks_repo:
+@app.delete("/items/{item_id}")
+async def delete_task(item_id: str):
+    global items_repo
+    if item_id not in items_repo:
         return Response(status_code=404)
-    del tasks_repo[task_id]
-    logging.info(f"Task {task_id} removed")
+    del items_repo[item_id]
+    logging.info(f"Item {item_id} removed")
