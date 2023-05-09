@@ -47,7 +47,9 @@ export class TaskEditorComponent implements OnInit {
       this.taskForm.get('name')?.value || '',
       this.taskForm.get('image')?.value || '',
       this.taskForm.get('schedule')?.value || '',
-      this.taskForm.get('script')?.value || ''
+      this.taskForm.get('script')?.value || '',
+      this.taskForm.get('memory')?.value || '',
+      this.taskForm.get('cpu')?.value || ''
     )
     if (this.currentTaskId) {
       this.taskService.update(this.currentTaskId, task).subscribe( {

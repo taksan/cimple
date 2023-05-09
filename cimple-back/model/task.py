@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from model.build import Build
 
+
 class Task(BaseModel):
     id: Optional[int] = None
     name: str
@@ -14,6 +15,8 @@ class Task(BaseModel):
     script: str
     created: str
     builds: List[Build] = []
+    memory: str = "10Mi"
+    cpu: str = "0.1"
 
     def __init__(self, **data):
         data['created'] = datetime.now().isoformat()
