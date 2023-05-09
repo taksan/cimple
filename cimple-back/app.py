@@ -38,15 +38,6 @@ async def get_task(task_id: int):
     return task_repo.get(task_id)
 
 
-@app.get("/tasks/{task_id}/script")
-async def get_task(task_id: int):
-    return Response(task_repo.get(task_id).script, media_type="text/plain")
-
-
-@app.get("/tasks/{task_id}/image")
-async def get_task(task_id: int):
-    return Response(task_repo.get(task_id).image, media_type="text/plain")
-
 
 @app.put("/tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
@@ -64,7 +55,6 @@ async def trigger_task(task_id: int):
     task = task_repo.get(task_id)
     build = task.trigger()
 
-    print(task.builds)
     task_repo.update(task_id, task)
 
     response_data = {
@@ -82,3 +72,8 @@ async def build_completed(task_id: int, build_id: int, exit_code: int = Query(..
     task = task_repo.get(task_id)
     task.complete(build_id, log_output, exit_code)
     task_repo.update(task_id, task)
+
+
+@app.get("/tasks/{task_id}/field/{field}")
+async def get_task(task_id: int, field: str):
+    return Response(getattr(task_repo.get(task_id), field), media_type="text/plain")
