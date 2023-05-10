@@ -6,7 +6,7 @@ import requests
 from fastapi import HTTPException
 from requests import Response
 
-from model.task import Task
+from .model.task import Task
 
 
 def handle_errors(response: Response):
@@ -25,6 +25,9 @@ class RemoteRepo:
 
         repo_pass = base64.b64encode(f"{store_user}:{store_pass}".encode("UTF-8")).decode()
         self.headers = {'Content-Type': 'application/json', 'Authorization': f'Basic {repo_pass}'}
+
+    def reset(self):
+        pass # can't reset the remote repo yet
 
     def list(self):
         response = requests.get(f"{self.repo_url}/items", headers=self.headers)

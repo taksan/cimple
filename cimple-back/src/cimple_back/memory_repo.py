@@ -2,11 +2,15 @@ from typing import Dict
 
 from fastapi import HTTPException
 
-from model.task import Task
+from .model.task import Task
 
 
-class TaskRepo:
+class MemoryRepo:
     def __init__(self):
+        self.current_task_id = 0
+        self.task_list: Dict[int, Task] = {}
+
+    def reset(self):
         self.current_task_id = 0
         self.task_list: Dict[int, Task] = {}
 

@@ -1,12 +1,14 @@
 import logging
 import os
 
-from fastapi import FastAPI, UploadFile, File, Query, Response
+from fastapi import FastAPI, UploadFile, File, Query, Response, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from local_repo import TaskRepo
-from model.task import Task
-from remote_repo import RemoteRepo
+from .memory_repo import MemoryRepo
+from .model.task import Task
+from .remote_repo import RemoteRepo
 
 # Configure the logger
 logging.basicConfig(
@@ -17,7 +19,7 @@ logging.basicConfig(
 
 app = FastAPI()
 
-task_repo = TaskRepo() if os.environ.get("STORE_DOMAIN") is None else RemoteRepo()
+task_repo = MemoryRepo() if os.environ.get("STORE_DOMAIN") is None else RemoteRepo()
 
 origins = ["*"]
 
@@ -28,6 +30,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    logging.error(f"{request}: {exc_str}")
+    content = {'status_code': 10422, 'message': exc_str, 'data': None}
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 @app.get("/tasks")
@@ -64,8 +74,12 @@ async def delete_task(task_id: int):
 @app.post("/tasks/{task_id}/trigger")
 async def trigger_task(task_id: int):
     task = task_repo.get(task_id)
-    build = task.trigger()
 
+    def handle_failure(build_id, log_output: str, exit_code: int):
+        task.complete(build_id, log_output, exit_code)
+        task_repo.update(task_id, task)
+
+    build = task.trigger(handle_failure)
     task_repo.update(task_id, task)
 
     response_data = {

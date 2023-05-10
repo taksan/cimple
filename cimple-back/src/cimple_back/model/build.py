@@ -1,7 +1,8 @@
+import os
 import subprocess
 import threading
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Callable
 
 from pydantic import BaseModel
 
@@ -19,13 +20,18 @@ class Build(BaseModel):
         data['created'] = datetime.now().isoformat()
         super().__init__(**data)
 
-    def run(self):
-        def run_script(build):
-            process = subprocess.Popen(f"./executor.sh {build.task_id} {build.id}",
+    def run(self, on_start_failure: Callable[[int, str, int], None]):
+        def run_script(build: Build):
+            process = subprocess.Popen(f"{os.environ.get('TASK_EXECUTOR', './executor.sh')} {build.task_id} {build.id}",
                                        stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT,
                                        shell=True)
-            process.communicate()
+            out, err = process.communicate()
+            print(out)
+
+            if process.returncode != 0:
+                print(f'Process failed to start with code {process.returncode}')
+                on_start_failure(build.id, out.decode(), process.returncode)
 
         t = threading.Thread(target=run_script, args=(self,))
         t.start()

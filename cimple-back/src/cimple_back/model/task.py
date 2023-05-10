@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from model.build import Build
+from .build import Build
 
 
 class Task(BaseModel):
@@ -22,10 +22,10 @@ class Task(BaseModel):
         data['created'] = datetime.now().isoformat()
         super().__init__(**data)
 
-    def trigger(self) -> Build:
+    def trigger(self, handle_start_failure: Callable[[int, str, int], None]) -> Build:
         build = Build(id=len(self.builds), task_id=self.id, script=self.script)
         self.builds.append(build)
-        build.run()
+        build.run(handle_start_failure)
         return build
 
     def complete(self, build_id: int, output: str, exit_code: int):
