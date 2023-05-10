@@ -4,12 +4,17 @@ import os
 
 class Repo:
     def __init__(self, file: str):
+        self.repo = None
+        self.index = None
         self.filename = file
         if os.path.exists(file):
             self.init_from_file(file)
         else:
-            self.index = 0
-            self.repo = {}
+            self.reset()
+
+    def reset(self):
+        self.index = 0
+        self.repo = {}
 
     def init_from_file(self, file):
         with open(file, "r") as f:

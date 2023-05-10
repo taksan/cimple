@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from store import Repo
+from .store import Repo
 
 # Configure the logger
 logging.basicConfig(
