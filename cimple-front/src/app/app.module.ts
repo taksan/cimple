@@ -17,7 +17,7 @@ import {AngularDateHttpInterceptorInterceptor} from "./utils/angular-date-http-i
     TasksComponent,
     TaskEditorComponent,
     ToasterComponent,
-    BuildsComponent
+    BuildsComponent,
   ],
   imports: [
     BrowserModule,

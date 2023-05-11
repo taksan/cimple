@@ -43,14 +43,7 @@ export class TaskEditorComponent implements OnInit {
       this.taskForm.markAllAsTouched()
       return
     }
-    let task: Task = new Task(
-      this.taskForm.get('name')?.value || '',
-      this.taskForm.get('image')?.value || '',
-      this.taskForm.get('schedule')?.value || '',
-      this.taskForm.get('script')?.value || '',
-      this.taskForm.get('memory')?.value || '',
-      this.taskForm.get('cpu')?.value || ''
-    )
+    let task: Task = new Task(null, this.taskForm.get('name')?.value || '', this.taskForm.get('image')?.value || '', this.taskForm.get('schedule')?.value || '', this.taskForm.get('script')?.value || '', this.taskForm.get('memory')?.value || '', this.taskForm.get('cpu')?.value || '')
     if (this.currentTaskId) {
       this.taskService.update(this.currentTaskId, task).subscribe( {
         next: _r => this.router.navigate(['/']).then(),

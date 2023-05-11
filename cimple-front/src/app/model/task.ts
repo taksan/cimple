@@ -11,18 +11,21 @@ export class Task {
   memory: string= "10"
   cpu: string = "0.1"
 
-  constructor(name: string = "",
-              image: string| null = null,
-              schedule: string| null = null,
+  constructor(id: string | null = null,
+              name: string = "",
+              image: string | null = null,
+              schedule: string | null = null,
               script: string = "",
               memory: string = "10",
-              cpu: string = "0.1") {
+              cpu: string = "0.1", created: Date | null = null) {
+    this.id = id
     this.name = name
     this.image = image
     this.schedule = schedule
     this.script = script
     this.memory = memory+"Mi"
     this.cpu = cpu
+    this.created = created
   }
 
   status(): "none" | "running" | "succeeded" | "failed" {

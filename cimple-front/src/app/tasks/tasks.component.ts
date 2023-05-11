@@ -23,13 +23,12 @@ export class TasksComponent implements OnInit {
     this.updateTasks();
   }
 
-  private updateTasks() {
+  public updateTasks() {
     this.taskService.list().subscribe({
       next: (tasks: Task[]) => {
         this.taskList = tasks
       },
       error: (err) => {
-        console.log(err)
         this.toaster.error("Failed fetch tasks", err.message)
       }
     })

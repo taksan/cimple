@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import {Subject} from "rxjs";
 import {ToastMessage} from "./toast-message";
+import {Observer} from "rxjs/src/internal/types";
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +20,7 @@ export class ToasterService {
     this.toastSubject.error(new ToastMessage(header, message))
   }
 
-  subscribe(param: (toast:ToastMessage) => void) {
-    this.toast.subscribe(param)
+  subscribe(observerOrNext?: Partial<Observer<ToastMessage>> | ((value: ToastMessage) => void)) {
+    this.toast.subscribe(observerOrNext)
   }
 }
