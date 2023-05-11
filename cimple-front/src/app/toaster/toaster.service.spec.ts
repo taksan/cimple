@@ -29,12 +29,12 @@ describe('ToasterService', () => {
     const header = 'Error';
     const message = 'An error occurred';
 
-    toasterService.subscribe({
-      error: (toast: ToastMessage)=> {
+    toasterService.subscribeError(
+      (toast: ToastMessage)=> {
         expect(toast.header).toBe(header);
         expect(toast.message).toBe(message);
         done();
-    }});
+    });
 
     toasterService.error(header, message);
   });

@@ -4,6 +4,7 @@ import {Task} from "./model/task";
 import {map, Observable} from "rxjs";
 import {TaskBuildResponse} from "./model/task-build-response";
 import {TaskDeleteResponse} from "./model/task-delete-response";
+import { environment } from '../environments/environment';
 
 
 @Injectable({
@@ -14,7 +15,7 @@ export class TaskService {
   constructor(private http: HttpClient) { }
 
   public list(): Observable<Task[]> {
-    return this.http.get<Map<string, Task>>("http://localhost:8000/tasks")
+    return this.http.get<Map<string, Task>>(`${environment.backendUrl}/tasks`)
       .pipe(
         map(m => Object.values(m)),
         map(m => m.map(t => Task.from(t)))
@@ -22,17 +23,17 @@ export class TaskService {
   }
 
   public create(task: Task): Observable<Task> {
-    return this.http.post<Task>("http://localhost:8000/tasks", task)
+    return this.http.post<Task>(`${environment.backendUrl}/tasks`, task)
       .pipe(map(t => Task.from(t)))
   }
 
   public get(id: number) {
-    return this.http.get<Task>(`http://localhost:8000/tasks/${id}`)
+    return this.http.get<Task>(`${environment.backendUrl}/tasks/${id}`)
       .pipe(map(t => Task.from(t)))
   }
 
   public update(id: number, task: Task): Observable<Task> {
-    return this.http.put<Task>(`http://localhost:8000/tasks/${id}`, task)
+    return this.http.put<Task>(`${environment.backendUrl}/tasks/${id}`, task)
       .pipe(map(t => Task.from(t)))
   }
 

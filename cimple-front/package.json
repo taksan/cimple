@@ -1,10 +1,10 @@
 {
   "name": "cimple-front",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "jest --verbose",
     "test:watch": "jest --watch"
@@ -29,10 +29,8 @@
     "@angular/compiler-cli": "^16.0.0",
     "@types/jasmine": "~4.3.0",
     "@types/jest": "^29.5.1",
-    "jasmine-core": "~4.6.0",
     "jest": "^29.5.0",
     "jest-preset-angular": "^13.1.0",
-    "karma-coverage": "~2.2.0",
     "typescript": "~5.0.2"
   }
 }
