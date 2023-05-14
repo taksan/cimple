@@ -1,16 +1,20 @@
+import contextvars
 import logging
 import os
 
 from fastapi import FastAPI, UploadFile, File, Query, Response, Request, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from .event_log import EVENT_LOGGER
 from .memory_repo import MemoryRepo
 from .model.task import Task
 from .remote_repo import RemoteRepo
+from .utils.log_filter_request_ip import LogFilterRequestIP
 
-# Configure the logger
+# Basic logger
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s',
@@ -18,18 +22,27 @@ logging.basicConfig(
 )
 
 app = FastAPI()
-
-task_repo = MemoryRepo() if os.environ.get("STORE_DOMAIN") is None else RemoteRepo()
-
-origins = ["*"]
+task_repo = MemoryRepo() if os.environ.get("STORE_URL") is None else RemoteRepo()
+LOG_IP_FILTER = LogFilterRequestIP()
+EVENT_LOGGER.addFilter(LOG_IP_FILTER)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(ProxyHeadersMiddleware)
+
+
+@app.middleware("http")
+async def add_request_to_log_filter(request: Request, call_next):
+    current_request = contextvars.ContextVar("current_request")
+    current_request.set(request)
+    response = await call_next(request)
+    current_request.set(None)
+    return response
 
 
 @app.exception_handler(RequestValidationError)
@@ -48,7 +61,7 @@ async def get_tasks():
 @app.post("/tasks")
 async def create_task(task: Task):
     task_repo.add(task)
-    logging.info(f"Task '{task.name}' created")
+    EVENT_LOGGER.info(f"Task '{task.name}' created")
     return task
 
 
@@ -60,14 +73,14 @@ async def get_task(task_id: int):
 @app.put("/tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
     task_repo.update(task_id, updated_task)
-    logging.info(f"Task '{updated_task.name}' updated")
+    EVENT_LOGGER.info(f"Task '{updated_task.name}' updated")
 
 
 @app.delete("/tasks/{task_id}")
 async def delete_task(task_id: int):
     task_to_remove = task_repo.get(task_id)
     task_repo.delete(task_id)
-    logging.info(f"Task '{task_to_remove.name}' removed")
+    EVENT_LOGGER.info(f"Task '{task_to_remove.name}' removed")
     return {'taskId': task_id, 'detail': 'removal succeeded'}
 
 
@@ -87,7 +100,7 @@ async def trigger_task(task_id: int):
         "buildNumber": build.id,
         "task": task.name
     }
-    logging.info(f"Task '{task.name}' build #{build.id} started")
+    EVENT_LOGGER.info(f"Task '{task.name}' build #{build.id} started")
 
     return response_data
 
@@ -98,7 +111,7 @@ async def build_completed(task_id: int, build_id: int, exit_code: int = Query(..
     task = task_repo.get(task_id)
     task.complete(build_id, log_output, exit_code)
     task_repo.update(task_id, task)
-    logging.info(f"Task '{task.name}' build #{build_id} completed")
+    EVENT_LOGGER.info(f"Task '{task.name}' build #{build_id} completed")
 
 
 @app.get("/tasks/{task_id}/field/{field}")

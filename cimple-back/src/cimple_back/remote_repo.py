@@ -17,11 +17,11 @@ def handle_errors(response: Response):
 
 class RemoteRepo:
     def __init__(self):
-        self.repo_url = os.environ.get("STORE_DOMAIN")
+        self.repo_url = os.environ.get("STORE_URL")
         store_user = os.environ.get("STORE_USER")
         store_pass = os.environ.get("STORE_PASS")
         if store_user is None or store_pass is None:
-            raise ValueError("Store credentials are not set")
+            raise ValueError("Store credentials must be set")
 
         repo_pass = base64.b64encode(f"{store_user}:{store_pass}".encode("UTF-8")).decode()
         self.headers = {'Content-Type': 'application/json', 'Authorization': f'Basic {repo_pass}'}
