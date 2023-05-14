@@ -9,14 +9,9 @@ from fastapi.responses import JSONResponse
 
 from .store import Repo
 
-# Configure the logger
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(message)s',
-    handlers=[logging.StreamHandler()]
-)
+DB_FILE = os.environ.get("DB_FILE", "data/tasks.json")
 
-items_repo = Repo(os.environ.get("DB_FILE", "tasks.json"))
+items_repo = Repo(DB_FILE)
 app = FastAPI()
 
 
