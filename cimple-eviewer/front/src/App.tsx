@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootswatch/dist/sketchy/bootstrap.css';
 import {Event} from "./Event";
 import {EventTable} from "./EventTable";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+import useWebSocket from 'react-use-websocket';
 
 function App() {
     const [events, setEvents] = React.useState<Event[]>([]);
@@ -15,7 +15,7 @@ function App() {
             .then(eventsFromServer => setEvents(eventsFromServer.reverse()));
     }, [])
 
-    const { lastMessage } = useWebSocket(`ws://${window.location.host}/socket`, {
+    useWebSocket(`ws://${window.location.host}/socket`, {
         onOpen: () => {
           console.log('WebSocket connection established.');
         },
