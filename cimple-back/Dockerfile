@@ -20,20 +20,24 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 
 # Stage 2: Create a lightweight production image
 FROM python:3.11.3-alpine
+RUN apk add --no-cache bash curl
 
 # Create a non-root user
 RUN adduser -D appuser
-USER appuser
 
 # Set the working directory
 WORKDIR /app
+COPY executor.sh .
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 # Copy the installed application from the builder stage
 COPY --chown="appuser:appuser" --from=builder /root/.local/lib "/home/appuser/.local/lib"
 COPY --chown="appuser:appuser" --from=builder /root/.local/bin "/home/appuser/.local/bin"
 COPY --chown="appuser:appuser" --from=builder /tmp/kubectl /usr/local/bin/kubectl
 
-COPY executor.sh .
+
 
 # Set the entrypoint command
 CMD ["/home/appuser/.local/bin/cimple-back"]

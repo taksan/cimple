@@ -5,7 +5,7 @@ import logging
 class LogFilterRequestIP(logging.Filter):
     def __init__(self, name: str = ''):
         super().__init__(name)
-        self.current_request = contextvars.ContextVar("current_request")
+        self.current_request = contextvars.ContextVar("current_request", default=None)
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.client_ip = "-"
