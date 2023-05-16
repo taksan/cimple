@@ -2,30 +2,27 @@ import express from 'express';
 // @ts-ignore
 import path from 'path';
 import expressWs from 'express-ws';
-import cors from 'cors';
-
 const app = express();
-// we must attach expressWS before importing routes
-expressWs(app);
-app.use(cors());
-app.use(express.json());
 
-import { eventsRouter } from './events';
+// We must attach expressWS before importing routes
+expressWs(app);
+import {eventsRouter} from './events';
+
+app.use(express.json());
 
 const port = process.env.PORT || 5000;
 
 // Serve static files from the React frontend
-app.use(express.static(path.join(__dirname, '../../front/build')));
+app.use(express.static(path.join(__dirname, './front')));
 app.use(eventsRouter)
 
 
 app.get('*', (req, res) => {
-  console.log(req.url)
-  res.sendFile(path.join(__dirname, '../../front/build/index.html'));
+    res.sendFile(path.join(__dirname, './front/index.html'));
 });
 
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on port ${port}`);
 });
