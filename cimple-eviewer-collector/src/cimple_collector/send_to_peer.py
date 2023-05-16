@@ -9,4 +9,5 @@ def send_data_to_remote(param):
         # should raise exception
         raise Exception("CIMPLE_COLLECTOR_PEER_URL variable is not set")
 
-    requests.post(url=target, data=param)
+    message = {"content": param}
+    requests.post(url=target, json=message)
