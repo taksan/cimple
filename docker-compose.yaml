@@ -1,0 +1,49 @@
+version: '3'
+services:
+  cimple-back:
+    image: cimple-back
+    ports:
+      - 8000:8000
+    environment:
+      - STORE_URL=http://cimple-store:8001
+      - STORE_PASS=${STORE_PASS}
+      - STORE_USER=${STORE_USER}
+      - AUDIT_LOG_FILE=/app/log/audit_events.log
+    depends_on:
+      - cimple-store
+    volumes:
+      - back-collector:/app/log/
+
+  cimple-eviewer-collector:
+    image: cimple-eviewer-collector
+    environment:
+      - EVENTS_FILE=/home/appuser/log/audit_events.log
+      - CIMPLE_COLLECTOR_PEER_URL=http://cimple-eviewer:5000/api/events
+    volumes:
+      - back-collector:/home/appuser/log
+
+  cimple-store:
+    image: cimple-store
+    ports:
+      - 8001:8001
+    environment:
+      - STORE_PASS=${STORE_PASS}
+      - STORE_USER=${STORE_USER}
+      - DB_FILE=/app/data/tasks.json
+    volumes:
+      - ./cimple-store-data:/app/data
+
+  cimple-front:
+    image: cimple-front
+    ports:
+      - 8080:80
+    environment:
+      - BACKEND_URL=http://localhost:8000
+
+  cimple-eviewer:
+    image: cimple-eviewer
+    ports:
+      - 5000:5000
+
+volumes:
+  back-collector:
