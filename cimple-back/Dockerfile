@@ -3,6 +3,7 @@ FROM python:3.11.3-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache build-base libffi-dev
+RUN apk --no-cache add curl
 
 WORKDIR /app
 
@@ -12,6 +13,10 @@ COPY setup.py .
 
 # Build and install the application
 RUN pip install --user .
+
+WORKDIR /tmp
+RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x ./kubectl
 
 # Stage 2: Create a lightweight production image
 FROM python:3.11.3-alpine
@@ -26,6 +31,7 @@ WORKDIR /app
 # Copy the installed application from the builder stage
 COPY --chown="appuser:appuser" --from=builder /root/.local/lib "/home/appuser/.local/lib"
 COPY --chown="appuser:appuser" --from=builder /root/.local/bin "/home/appuser/.local/bin"
+COPY --chown="appuser:appuser" --from=builder /tmp/kubectl /usr/local/bin/kubectl
 
 COPY executor.sh .
 
