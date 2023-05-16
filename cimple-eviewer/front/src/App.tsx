@@ -7,7 +7,6 @@ import {Event} from "./Event";
 import {EventTable} from "./EventTable";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-console.log(window.location.host);
 function App() {
     const [events, setEvents] = React.useState<Event[]>([]);
     useEffect(() => {
@@ -26,26 +25,16 @@ function App() {
         shouldReconnect: () => true,
         onMessage: message => {
             let event = JSON.parse(message.data);
-            setEvents(events => [event, ...events ]);
+            event.isNew = true
+            let updated = [event, ...events ]
+            setEvents(events => updated);
+            setTimeout(() => {
+                event.isNew = false;
+                let updatedEvents = updated.slice()
+                setEvents(updatedEvents)
+            }, 2000)
         }
     });
-    // useEffect(() => {
-    //     let ws = new WebSocket('ws://localhost:5000/socket');
-    //     ws.addEventListener('error', function (m) {
-    //         console.log(m);
-    //     });
-    //     ws.addEventListener('open', function (m) {
-    //         console.log("websocket connection open");
-    //     });
-    //     ws.addEventListener('message', function (m) {
-    //         let event = JSON.parse(m.data);
-    //         setEvents(events => [event, ...events ]);
-    //     });
-    //     return () => {
-    //         // Clean up the WebSocket connection on component unmount
-    //         ws.close()
-    //     };
-    // }, []);
 
     return (
         <div className="container">
