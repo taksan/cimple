@@ -2,6 +2,7 @@ import contextvars
 import logging
 import os
 
+import asyncio
 from fastapi import FastAPI, UploadFile, File, Query, Response, Request, status, WebSocket
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -93,9 +94,16 @@ async def trigger_task(task_id: int, request: Request):
     task = task_repo.get(task_id)
     client_id = request.headers.get("X-CLIENT-ID")
 
-    def handle_failure(build_id, log_output: str, exit_code: int):
-        task.complete(build_id, log_output, exit_code)
+    def handle_failure(build_id: int, log_output: str, exit_code: int):
+        completed_build = task.complete(build_id, log_output, exit_code)
         task_repo.update(task_id, task)
+        failure_message = {
+            "type": "build_completed",
+            "message": f"build #{build_id} failed to start",
+            "build_id": str(build_id),
+            "exit_code": str(exit_code)
+        }
+        asyncio.run(wsManager.send_message_to_client(completed_build.started_by, failure_message))
 
     build = task.trigger(client_id, handle_failure)
     task_repo.update(task_id, task)
