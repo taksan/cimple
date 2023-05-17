@@ -1,0 +1,47 @@
+h1 {
+  display: inline-block;
+}
+.user {
+  float: right;
+  width: 128px;
+  height: 80px;
+  text-align: center;
+}
+
+.user img {
+  width: 64px;
+  height: 64px;
+  display: block;
+  margin: auto;
+}
+
+.avatar {
+  animation-name: reverse;
+  animation-duration: 1s;
+}
+
+.avatar:hover {
+  fill: wheat;
+  animation-name: grow;
+  animation-duration: 1s;
+  cursor: pointer;
+}
+
+@keyframes grow {
+  0% {
+    fill: #eeeeee;
+  }
+  100% {
+    fill: wheat;
+  }
+}
+
+
+@keyframes reverse {
+  100% {
+    fill: #eeeeee;
+  }
+  0% {
+    fill: wheat;
+  }
+}

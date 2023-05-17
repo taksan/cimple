@@ -1,2 +1,13 @@
+<h1><a href="/">CImple</a></h1>
+<div class="user" (click)="logout()">
+  <svg width='80' height='80' style="margin-bottom: -80px">
+   <circle class="avatar"  cx='40' cy='40' r='36' stroke='gray' stroke-width='4' fill='#eeeeee'>
+     <title>Logout</title>
+   </circle>
+  </svg>
+  <img alt="{{clientId}}" title="Logged in User" src="https://api.dicebear.com/6.x/adventurer/svg?seed={{clientId}}">
+  <span>{{clientId}}</span>
+</div>
+
 <router-outlet></router-outlet>
 <app-toaster #toaster></app-toaster>

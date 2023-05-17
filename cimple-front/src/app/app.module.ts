@@ -10,6 +10,8 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {ToasterComponent} from './toaster/toaster.component';
 import {BuildsComponent} from './builds/builds.component';
 import {AngularDateHttpInterceptorInterceptor} from "./utils/angular-date-http-interceptor.interceptor";
+import {MyHttpInterceptor} from "./utils/id-injector-http.interceptor";
+import {NgOptimizedImage} from "@angular/common";
 
 @NgModule({
   declarations: [
@@ -24,10 +26,12 @@ import {AngularDateHttpInterceptorInterceptor} from "./utils/angular-date-http-i
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    NgOptimizedImage
   ],
   providers: [
-    {provide: HTTP_INTERCEPTORS, useClass: AngularDateHttpInterceptorInterceptor, multi: true}
+    {provide: HTTP_INTERCEPTORS, useClass: AngularDateHttpInterceptorInterceptor, multi: true},
+    {provide: HTTP_INTERCEPTORS, useClass: MyHttpInterceptor, multi: true}
   ],
   bootstrap: [AppComponent]
 })

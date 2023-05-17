@@ -68,6 +68,7 @@ describe('BuildsComponent', () => {
       id: 1,
       finished: new Date(),
       output: 'output',
+      started_by: '',
       execStatus: () => 'succeeded'
     };
 
@@ -107,14 +108,14 @@ describe('BuildsComponent', () => {
         finished: new Date(),
         output: 'output 1',
         execStatus: () => 'succeeded',
-        created: undefined, exit_code: undefined, status: "", task_id: 1,
+        created: undefined, exit_code: undefined, status: "", task_id: 1, started_by: ''
       },
       {
         id: 2,
         finished: new Date(),
         output: 'output 2',
         execStatus: () => 'failed',
-        created: undefined, exit_code: undefined, status: "", task_id: 1,
+        created: undefined, exit_code: undefined, status: "", task_id: 1, started_by: ''
       },
     ];
 
@@ -132,7 +133,7 @@ describe('BuildsComponent', () => {
     const datePipe = new DatePipe('en-US');
     // Assert the build details in each row
     rows.forEach((row, index) => {
-      const build = builds[builds.length - index -1];
+      const build = builds[index];
       const buildColumns = row.queryAll(By.css('td'));
 
       // Assert the build number

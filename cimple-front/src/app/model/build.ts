@@ -6,6 +6,7 @@ export class Build {
   exit_code: number | null | undefined
   created: Date | null | undefined
   finished: Date | null | undefined
+  started_by: string = ''
 
   public execStatus(): "running" | "succeeded" | "failed" {
     if (this.exit_code === null || this.exit_code === undefined)
