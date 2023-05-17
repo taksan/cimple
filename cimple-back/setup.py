@@ -15,8 +15,12 @@ setup(
     entry_points={
         'console_scripts': ['cimple-back=cimple_back.__main__:main'],
     },
-    install_requires=['requests==2.30.*', 'fastapi==0.68.1', 'uvicorn==0.15.0', 'python-multipart==0.0.6'],
+    install_requires=['requests==2.30.*',
+                      'fastapi==0.68.1',
+                      'uvicorn==0.15.0',
+                      'python-multipart==0.0.6',
+                      'websockets==11.0.3'],
     extras_require={
-        'tests': ['pytest==6.2.*', 'httpx==0.24.0','pytest-timeout==2.1.0']
+        'tests': ['pytest==6.2.*', 'httpx==0.24.0', 'pytest-timeout==2.1.0', 'freezegun==1.2.2']
     }
 )

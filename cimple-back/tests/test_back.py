@@ -2,19 +2,45 @@ import os.path
 import time
 
 import pytest
-
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 
 from cimple_back.app import app
 
-client = TestClient(app)
+
+class WebSocketServer:
+    def send_message(self, message):
+        # Implementation of sending message
+        pass
+
+
+class CustomTestClient(TestClient):
+    def request(self, *args, **kwargs):
+        kwargs.setdefault('headers', {})
+        kwargs['headers']['X-CLIENT-ID'] = 'bob'
+
+        return super().request(*args, **kwargs)
+
+
+client = CustomTestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def cleanup_repo():
+def cleanup_repo(tmp_path):
     from cimple_back.app import task_repo
+    audit_log_file = os.environ["AUDIT_LOG_FILE"]
+    if os.path.exists(audit_log_file):
+        os.truncate(audit_log_file, 0)
+
     yield
+
     task_repo.reset()
+    os.truncate(audit_log_file, 0)
+
+
+def get_audit_logs():
+    with open(os.environ["AUDIT_LOG_FILE"]) as file:
+        return file.read()
 
 
 def test_when_fetching_tasks_should_return_empty():
@@ -23,6 +49,7 @@ def test_when_fetching_tasks_should_return_empty():
     assert response.json() == {}
 
 
+@freeze_time("2023-06-01")
 def test_when_task_is_created_should_return_new_task():
     created_task = create_one_task()
     del created_task['created']
@@ -34,6 +61,7 @@ def test_when_task_is_created_should_return_new_task():
                             'builds': [],
                             'image': '',
                             'schedule': None}
+    assert get_audit_logs().strip() == "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' created"
 
 
 def test_when_task_is_created_should_list_should_return_created_task():
@@ -52,6 +80,7 @@ def test_when_task_is_created_should_get_should_return_created_task():
     assert response.json() == created_task
 
 
+@freeze_time("2023-06-01")
 def test_when_task_is_updated_should_list_and_get_updated_task():
     created_task = create_one_task()
 
@@ -68,7 +97,11 @@ def test_when_task_is_updated_should_list_and_get_updated_task():
     assert response.status_code == 200
     assert response.json()[task_id]['name'] == "updated name"
 
+    assert get_audit_logs() == "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' created\n" \
+                               "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' updated\n"
 
+
+@freeze_time("2023-06-01")
 def test_when_task_is_deleted_list_should_be_empty():
     create_one_task()
     response = client.delete(f'/tasks/1')
@@ -77,6 +110,9 @@ def test_when_task_is_deleted_list_should_be_empty():
     response = client.get('/tasks')
     assert response.status_code == 200
     assert response.json() == {}
+
+    assert get_audit_logs() == "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' created\n" \
+                               "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' removed\n"
 
 
 def test_when_fetching_task_that_doesnt_exist_should_return_404():
@@ -103,32 +139,54 @@ def test_when_fetching_single_field_should_get_plain_text_value():
 
 
 @pytest.mark.timeout(1)
+@freeze_time("2023-06-01")
 def test_when_trigger_script_should_be_executed(tmp_path):
-    mock_result_file = tmp_path / "temp.txt"
-    os.environ['MOCK_OUTPUT_FILE'] = str(mock_result_file)
-
-    create_one_task()
-
-    response = client.post("/tasks/1/trigger")
-    assert response.status_code == 200
-    trigger_data = response.json()
-    assert trigger_data == {'taskId': 1, 'buildNumber': 0, 'task': 'a task'}
-
-    while not os.path.exists(mock_result_file):
-        time.sleep(0.01)
-
-    with open(mock_result_file) as f:
-        assert f.read().strip() == "task_id=1,build_id=0"
-
-    with open(mock_result_file, "r") as f:
-        response = client.post("/tasks/1/builds/0?exit_code=0", files={'file': f})
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_text("bob")
+        websocket.receive_text() # discard handshake
+    
+        mock_result_file = tmp_path / "temp.txt"
+        os.environ['MOCK_OUTPUT_FILE'] = str(mock_result_file)
+    
+        create_one_task()
+    
+        response = client.post("/tasks/1/trigger", headers={'X-bob': 'bob'})
         assert response.status_code == 200
+        trigger_data = response.json()
+        assert trigger_data == {'taskId': 1, 'buildNumber': 0, 'task': 'a task'}
+    
+        while not os.path.exists(mock_result_file):
+            time.sleep(0.01)
+    
+        with open(mock_result_file) as f:
+            assert f.read().strip() == "task_id=1,build_id=0"
+    
+        with open(mock_result_file, "r") as f:
+            response = client.post("/tasks/1/builds/0?exit_code=0", files={'file': f})
+            assert response.status_code == 200
+    
+        response = client.get("/tasks/1")
+        assert response.status_code == 200
+        builds = response.json()['builds']
+        assert builds[0]['output'].strip() == "task_id=1,build_id=0"
+        assert builds[0]['exit_code'] == 0
+        assert builds[0]['started_by'] == 'bob'
+    
+        assert get_audit_logs() == \
+               "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' created\n" \
+               "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' build #0 started\n" \
+               "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' build #0 completed (exit code = 0)\n"
+    
+        assert websocket.receive_json() == {"type": "build_completed",
+                                            "message": "build #0 completed",
+                                            "build_id": "0",
+                                            "exit_code": "0"}
 
-    response = client.get("/tasks/1")
-    assert response.status_code == 200
-    builds = response.json()['builds']
-    assert builds[0]['output'].strip() == "task_id=1,build_id=0"
-    assert builds[0]['exit_code'] == 0
+
+def test_websocket_endpoint():
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_json({"clientId": "bob"})
+        assert websocket.receive_json() == {"type": "handshake", "message": "Welcome bob"}
 
 
 def create_one_task():

@@ -15,6 +15,7 @@ class Build(BaseModel):
     exit_code: Optional[int] = None
     created: str
     finished: Optional[datetime] = None
+    started_by: str
 
     def __init__(self, **data):
         data['created'] = datetime.now().isoformat()

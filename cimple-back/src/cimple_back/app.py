@@ -2,7 +2,7 @@ import contextvars
 import logging
 import os
 
-from fastapi import FastAPI, UploadFile, File, Query, Response, Request, status
+from fastapi import FastAPI, UploadFile, File, Query, Response, Request, status, WebSocket
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -13,6 +13,7 @@ from .memory_repo import MemoryRepo
 from .model.task import Task
 from .remote_repo import RemoteRepo
 from .utils.log_filter_request_ip import LogFilterRequestIP
+from .websocket_manager import WebSocketManager
 
 # Basic logger
 logging.basicConfig(
@@ -21,9 +22,10 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+current_request = contextvars.ContextVar("current_request")
 app = FastAPI()
 task_repo = MemoryRepo() if os.environ.get("STORE_URL") is None else RemoteRepo()
-LOG_IP_FILTER = LogFilterRequestIP()
+LOG_IP_FILTER = LogFilterRequestIP(current_request)
 EVENT_LOGGER.addFilter(LOG_IP_FILTER)
 
 app.add_middleware(
@@ -35,10 +37,11 @@ app.add_middleware(
 )
 app.add_middleware(ProxyHeadersMiddleware)
 
+wsManager = WebSocketManager()
+
 
 @app.middleware("http")
 async def add_request_to_log_filter(request: Request, call_next):
-    current_request = contextvars.ContextVar("current_request")
     current_request.set(request)
     response = await call_next(request)
     current_request.set(None)
@@ -72,8 +75,9 @@ async def get_task(task_id: int):
 
 @app.put("/tasks/{task_id}")
 async def update_task(task_id: int, updated_task: Task):
+    previous_task = task_repo.get(task_id)
     task_repo.update(task_id, updated_task)
-    EVENT_LOGGER.info(f"Task '{updated_task.name}' updated")
+    EVENT_LOGGER.info(f"Task '{previous_task.name}' updated")
 
 
 @app.delete("/tasks/{task_id}")
@@ -85,14 +89,15 @@ async def delete_task(task_id: int):
 
 
 @app.post("/tasks/{task_id}/trigger")
-async def trigger_task(task_id: int):
+async def trigger_task(task_id: int, request: Request):
     task = task_repo.get(task_id)
+    client_id = request.headers.get("X-CLIENT-ID")
 
     def handle_failure(build_id, log_output: str, exit_code: int):
         task.complete(build_id, log_output, exit_code)
         task_repo.update(task_id, task)
 
-    build = task.trigger(handle_failure)
+    build = task.trigger(client_id, handle_failure)
     task_repo.update(task_id, task)
 
     response_data = {
@@ -109,11 +114,21 @@ async def trigger_task(task_id: int):
 async def build_completed(task_id: int, build_id: int, exit_code: int = Query(...), file: UploadFile = File(...)):
     log_output = await file.read()
     task = task_repo.get(task_id)
-    task.complete(build_id, log_output, exit_code)
+    build = task.complete(build_id, log_output, exit_code)
     task_repo.update(task_id, task)
-    EVENT_LOGGER.info(f"Task '{task.name}' build #{build_id} completed")
+    EVENT_LOGGER.info(f"Task '{task.name}' build #{build_id} completed (exit code = {exit_code})")
+    await wsManager.send_message_to_client(build.started_by,
+                                           {"type": "build_completed",
+                                            "message": f"build #{build_id} completed",
+                                            "build_id": str(build_id),
+                                            "exit_code": str(exit_code)})
 
 
 @app.get("/tasks/{task_id}/field/{field}")
 async def get_task(task_id: int, field: str):
     return Response(getattr(task_repo.get(task_id), field), media_type="text/plain")
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await wsManager.handle_client(websocket)

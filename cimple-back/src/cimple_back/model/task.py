@@ -22,8 +22,8 @@ class Task(BaseModel):
         data['created'] = datetime.now().isoformat()
         super().__init__(**data)
 
-    def trigger(self, handle_start_failure: Callable[[int, str, int], None]) -> Build:
-        build = Build(id=len(self.builds), task_id=self.id, script=self.script)
+    def trigger(self, client_id: str, handle_start_failure: Callable[[int, str, int], None]) -> Build:
+        build = Build(id=len(self.builds), task_id=self.id, script=self.script, started_by=client_id)
         self.builds.append(build)
         build.run(handle_start_failure)
         return build
@@ -33,3 +33,4 @@ class Task(BaseModel):
             raise HTTPException(status_code=404, detail="Build not found")
 
         self.builds[build_id].complete(output, exit_code)
+        return self.builds[build_id]
