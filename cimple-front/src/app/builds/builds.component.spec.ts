@@ -1,34 +1,56 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { BuildsComponent } from './builds.component';
-import { TaskService } from '../task.service';
-import { ToasterService } from '../toaster/toaster.service';
-import { of, throwError } from 'rxjs';
-import { Task } from '../model/task';
-import { Build } from '../model/build';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ActivatedRoute} from '@angular/router';
+import {BuildsComponent} from './builds.component';
+import {TaskService} from '../task.service';
+import {ToasterService} from '../toaster/toaster.service';
+import {of, throwError} from 'rxjs';
+import {Task} from '../model/task';
+import {Build} from '../model/build';
 import {By} from "@angular/platform-browser";
 import {DatePipe} from '@angular/common';
+import {WebSocketService} from "../web-socket.service";
+import {WS} from "jest-websocket-mock";
+import {MyIdService} from "../my-id.service";
+import {BuildNotifierService} from "../build-notifier.service";
 
 describe('BuildsComponent', () => {
   let component: BuildsComponent;
   let fixture: ComponentFixture<BuildsComponent>;
   let taskService: jest.Mocked<TaskService>;
   let toasterService: jest.Mocked<ToasterService>;
+  let server: WS;
+  let webSocketService: WebSocketService;
+  let buildNotifierMock: BuildNotifierService
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    server = new WS("ws://localhost:8000/ws");
+
+    const clientId = 'my-client-id';
+    const myIdServiceSpy = {
+      get: () => clientId
+    } as unknown as MyIdService
+    webSocketService = new WebSocketService(myIdServiceSpy)
+    await server.connected
+
     const taskServiceMock = {
       get: jest.fn(),
+      trigger: jest.fn()
     };
     const toasterServiceMock = {
       error: jest.fn(),
     };
 
-    TestBed.configureTestingModule({
+    buildNotifierMock = new BuildNotifierService(toasterServiceMock as unknown as ToasterService)
+    buildNotifierMock.notifyBuildCompleted = jest.fn()
+
+    await TestBed.configureTestingModule({
       declarations: [BuildsComponent],
       providers: [
-        { provide: TaskService, useValue: taskServiceMock },
-        { provide: ToasterService, useValue: toasterServiceMock },
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }) } }
+        {provide: TaskService, useValue: taskServiceMock},
+        {provide: ToasterService, useValue: toasterServiceMock},
+        {provide: ActivatedRoute, useValue: {params: of({id: 1})}},
+        {provide: WebSocketService, useValue: webSocketService},
+        {provide: BuildNotifierService, useValue: buildNotifierMock}
       ]
     }).compileComponents();
 
@@ -37,6 +59,11 @@ describe('BuildsComponent', () => {
     taskService = TestBed.inject(TaskService) as jest.Mocked<TaskService>;
     toasterService = TestBed.inject(ToasterService) as jest.Mocked<ToasterService>;
   });
+
+  afterEach(() => {
+    WS.clean()
+    server.close()
+  })
 
   it('should initialize component and load task', () => {
     const mockTask: Task = new Task(null, '1', 'Task 1', null, "", '10', '0.1');
@@ -63,14 +90,7 @@ describe('BuildsComponent', () => {
 
   it('should display build output when a build is selected', () => {
     const task: Task = new Task(null, 'Task 1', null, null, '', '10', '0.1');
-    const build: Build = {
-      created: undefined, exit_code: undefined, status: "", task_id: undefined,
-      id: 1,
-      finished: new Date(),
-      output: 'output',
-      started_by: '',
-      execStatus: () => 'succeeded'
-    };
+    const build: Build = oneBuild(1, 'output 1', 'succeeded')
 
     // Set the currentTask and selectedBuild
     component.currentTask = task;
@@ -100,24 +120,12 @@ describe('BuildsComponent', () => {
   });
 
   it('should render task builds correctly', () => {
-    const task: Task = new Task("1", 'Task 1', null, null, '', '10', '0.1');
+    const task: Task = oneTask();
 
     const builds: Build[] = [
-      {
-        id: 1,
-        finished: new Date(),
-        output: 'output 1',
-        execStatus: () => 'succeeded',
-        created: undefined, exit_code: undefined, status: "", task_id: 1, started_by: ''
-      },
-      {
-        id: 2,
-        finished: new Date(),
-        output: 'output 2',
-        execStatus: () => 'failed',
-        created: undefined, exit_code: undefined, status: "", task_id: 1, started_by: ''
-      },
-    ];
+      oneBuild(1, 'output 1', 'succeeded'),
+      oneBuild(2, 'output 2', 'failed')
+    ]
 
     // Set the currentTask and builds
     component.currentTask = task;
@@ -147,6 +155,74 @@ describe('BuildsComponent', () => {
       // Assert the build status
       const buildStatusColumn = buildColumns[2].nativeElement;
       expect(buildStatusColumn.textContent).toContain(build.execStatus());
-    });
+    })
+  })
+
+  it('should trigger a new build', () => {
+    const task: Task = oneTask();
+
+    const builds: Build[] = [ oneBuild(1, 'output 1', 'succeeded') ]
+
+    // Set the currentTask and builds
+    component.currentTask = task;
+    task.builds = builds;
+
+    fixture.detectChanges();
+
+    // Get the table rows
+    let runButton = fixture.debugElement.query(By.css('[data-testid="run-button"]')).nativeElement;
+    runButton.click()
+    expect(taskService.trigger).toHaveBeenCalledWith("1");
   });
+
+  it('should update the builds when a build completes', async () => {
+    // @ts-ignore
+    await expect(server).toReceiveMessage(JSON.stringify({clientId: 'my-client-id'}));
+
+    const task: Task = oneTask();
+    const builds: Build[] = [ oneBuild(1, 'output 1', 'succeeded') ]
+
+    // Set the currentTask and builds
+    component.currentTask = task;
+    task.builds = builds;
+    fixture.detectChanges();
+
+    let thisBuild = {
+      type: "build_completed",
+      message: "Build #2 for task 'Task 1' completed",
+      details: new Build({id: 2, exit_code: 127, task_id: 1})
+    };
+    server.send(JSON.stringify(thisBuild))
+
+    let notThisBuild = {
+      type: "build_completed",
+      message: "Build #1 for task 'Some other task' completed",
+      details: new Build({id: 2, exit_code: 127, task_id: 2})
+    };
+    server.send(JSON.stringify(notThisBuild))
+    // @ts-ignore
+    expect(buildNotifierMock.notifyBuildCompleted.mock.calls).toEqual([[thisBuild]])
+
+    fixture.detectChanges();
+    const build1 = fixture.debugElement.query(By.css('tr[data-testid="build-2"]')).nativeElement;
+    expect(build1.querySelector("[data-testid='status']").textContent.trim()).toBe("failed");
+    expect(build1.classList).toContain("flash")
+  });
+
+  function oneTask() {
+    return new Task("1", 'Task 1', null, null, '', '10', '0.1')
+  }
+  function oneBuild(id: number, output: string, execStatus: "running" | "succeeded" | "failed") : Build {
+    return new Build({
+        id: id,
+        finished: new Date(),
+        output: output,
+        execStatus: () => execStatus,
+        created: undefined,
+        exit_code: undefined,
+        status: "",
+        task_id: 1,
+        started_by: ''
+      })
+  }
 });

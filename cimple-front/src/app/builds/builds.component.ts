@@ -4,6 +4,8 @@ import {TaskService} from "../task.service";
 import {ActivatedRoute} from "@angular/router";
 import {Task} from "../model/task";
 import {ToasterService} from "../toaster/toaster.service";
+import {BuildNotifierService} from "../build-notifier.service";
+import {WebSocketService} from "../web-socket.service";
 
 @Component({
   selector: 'app-builds',
@@ -16,7 +18,9 @@ export class BuildsComponent implements OnInit {
 
   constructor(private taskService: TaskService,
               private route: ActivatedRoute,
-              private toaster: ToasterService) {
+              private toaster: ToasterService,
+              private webSocketService: WebSocketService,
+              private buildNotifier: BuildNotifierService) {
   }
 
   ngOnInit() {
@@ -31,6 +35,16 @@ export class BuildsComponent implements OnInit {
           this.toaster.error("Failed to load task builds", err.message)
         }
       })
+    })
+    this.webSocketService.subscribe(message => {
+      if (message.details?.task_id != this.currentTask?.id) return
+      this.buildNotifier.notifyBuildCompleted(message)
+      let newBuild = new Build(message.details);
+      newBuild.isNew = true
+      this.currentTask?.builds?.push(newBuild)
+      setTimeout(()=> {
+        newBuild.isNew =false
+      }, 1000)
     })
   }
 
@@ -53,6 +67,15 @@ export class BuildsComponent implements OnInit {
     }
     if (build === this.selectedBuild)
       additionalClass = "table-active"
+    if (build.isNew)
+      additionalClass = " flash"
     return `selectable ${additionalClass}`;
+  }
+
+  build() {
+    let taskId = this.currentTask?.id
+    console.log('build happens')
+    if (taskId)
+      this.taskService.trigger(taskId).subscribe()
   }
 }

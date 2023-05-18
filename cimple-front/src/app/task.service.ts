@@ -38,10 +38,10 @@ export class TaskService {
   }
 
   trigger(task_id: string) {
-    return this.http.post<TaskBuildResponse>(`http://localhost:8000/tasks/${task_id}/trigger`, null)
+    return this.http.post<TaskBuildResponse>(`${environment.backendUrl}/tasks/${task_id}/trigger`, null)
   }
 
   delete(task: Task) {
-    return this.http.delete<TaskDeleteResponse>(`http://localhost:8000/tasks/${task.id}`)
+    return this.http.delete<TaskDeleteResponse>(`${environment.backendUrl}/tasks/${task.id}`)
   }
 }

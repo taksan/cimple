@@ -2,7 +2,8 @@
   <div class="col-md-4">
     <h2>'{{ currentTask?.name }}' Builds</h2>
 
-    <table class="table table-hover task-list">
+    <a class="btn btn-primary" data-testid="run-button" (click)="build()">Run</a>
+    <table class="table table-hover build-list">
       <thead>
       <tr class="table-dark">
         <th scope="col">Number</th>
@@ -11,17 +12,18 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let build of currentTask?.builds" [class]="classFor(build)" (click)="selectBuild(build)">
-        <td># {{ build.id }}</td>
-        <td>{{ build.finished | date:"dd/MM/yy hh:mm" }}</td>
-        <td>{{ build.execStatus() }}</td>
+      <tr *ngFor="let build of currentTask?.builds" [class]="classFor(build)" (click)="selectBuild(build)"
+          attr.data-testid="{{ 'build-' + build.id }}">
+        <td data-testid="id"># {{ build.id }}</td>
+        <td data-testid="finished">{{ build.finished | date:"dd/MM/yy hh:mm" }}</td>
+        <td data-testid="status">{{ build.execStatus() }}</td>
       </tr>
       </tbody>
     </table>
   </div>
   <div class="col-md-8">
-    <h2 *ngIf="selectedBuild?.id !== undefined">Logs for #{{ selectedBuild?.id }}</h2>
-    <h2 *ngIf="selectedBuild?.id === undefined">Select a build to see logs</h2>
+    <h2 *ngIf="selectedBuild?.id !== null">Logs for #{{ selectedBuild?.id }}</h2>
+    <h2 *ngIf="selectedBuild?.id === null">Select a build to see logs</h2>
     <pre class="terminal">{{ selectedBuild?.output || '~ no output available ~' }}</pre>
   </div>
 </div>

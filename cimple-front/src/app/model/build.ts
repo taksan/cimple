@@ -7,6 +7,7 @@ export class Build {
   created: Date | null | undefined
   finished: Date | null | undefined
   started_by: string = ''
+  isNew: boolean = false
 
   public constructor(init?: Partial<Build>) {
     this.task_id = init?.task_id;

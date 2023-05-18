@@ -3,3 +3,22 @@
   color: lightgray;
   padding: 1em;
 }
+.build-list {
+  margin-top: 1em;
+}
+
+@keyframes flash-animation {
+  0% {
+    background-color: white;
+  }
+  50% {
+    background-color: yellow;
+  }
+  100% {
+    background-color: white;
+  }
+}
+
+.flash {
+  animation: flash-animation 1s infinite;
+}

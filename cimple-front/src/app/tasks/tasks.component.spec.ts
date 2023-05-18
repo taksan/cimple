@@ -16,16 +16,24 @@ import {Build} from "../model/build";
 describe('TasksComponent', () => {
   const clientId = 'my-client-id';
   let server: WS;
+  let webSocketService:WebSocketService;
   let component: TasksComponent;
   let fixture: ComponentFixture<TasksComponent>;
   let taskService: TaskService;
   let toasterService: ToasterService;
-  let webSocketService:WebSocketService;
   let buildNotifierMock: BuildNotifierService
-  let myIdServiceSpy: jest.Mocked<MyIdService>;
 
   let router: Router;
   beforeEach(async () => {
+    server = new WS("ws://localhost:8000/ws");
+
+    const clientId = 'my-client-id';
+    const myIdServiceSpy = {
+      get: () => clientId
+    } as unknown as MyIdService
+    webSocketService = new WebSocketService(myIdServiceSpy)
+    await server.connected
+
     const taskServiceMock = {
       list: jest.fn(),
       trigger: jest.fn(),
@@ -36,17 +44,6 @@ describe('TasksComponent', () => {
       success: jest.fn(),
       error: jest.fn(),
     };
-
-    server = new WS("ws://localhost:8000/ws");
-
-    const myIdServiceSpyObj = {
-      get: jest.fn()
-    };
-    myIdServiceSpy = myIdServiceSpyObj as unknown as jest.Mocked<MyIdService>;
-    myIdServiceSpy.get.mockReturnValue(clientId);
-
-    webSocketService = new WebSocketService(myIdServiceSpy)
-    await server.connected
 
     buildNotifierMock = new BuildNotifierService(toasterServiceMock as unknown as ToasterService)
     buildNotifierMock.notifyBuildCompleted = jest.fn()
