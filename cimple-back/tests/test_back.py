@@ -180,8 +180,10 @@ def test_when_trigger_script_should_be_executed(tmp_path):
 
         assert websocket.receive_json() == {"type": "build_completed",
                                             "message": "build #0 completed",
-                                            "build_id": "0",
-                                            "exit_code": "0"}
+                                            "details": {
+                                                "build_id": "0",
+                                                "exit_code": "0"
+                                            }}
 
 
 @pytest.mark.timeout(1)
@@ -204,8 +206,10 @@ def test_when_trigger_script_fails_to_start_sends_notification(tmp_path):
 
         assert websocket.receive_json() == {"type": "build_completed",
                                             "message": "build #0 failed to start",
-                                            "build_id": "0",
-                                            "exit_code": "127"}
+                                            "details": {
+                                                "build_id": "0",
+                                                "exit_code": "127"
+                                            }}
         response = client.get("/tasks/1")
         assert response.status_code == 200
         builds = response.json()['builds']

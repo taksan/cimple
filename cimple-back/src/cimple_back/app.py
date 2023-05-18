@@ -97,13 +97,7 @@ async def trigger_task(task_id: int, request: Request):
     def handle_failure(build_id: int, log_output: str, exit_code: int):
         completed_build = task.complete(build_id, log_output, exit_code)
         task_repo.update(task_id, task)
-        failure_message = {
-            "type": "build_completed",
-            "message": f"build #{build_id} failed to start",
-            "build_id": str(build_id),
-            "exit_code": str(exit_code)
-        }
-        asyncio.run(wsManager.send_message_to_client(completed_build.started_by, failure_message))
+        asyncio.run(wsManager.notify_build_result(completed_build, f"build #{build_id} failed to start"))
 
     build = task.trigger(client_id, handle_failure)
     task_repo.update(task_id, task)
@@ -125,11 +119,7 @@ async def build_completed(task_id: int, build_id: int, exit_code: int = Query(..
     build = task.complete(build_id, log_output, exit_code)
     task_repo.update(task_id, task)
     EVENT_LOGGER.info(f"Task '{task.name}' build #{build_id} completed (exit code = {exit_code})")
-    await wsManager.send_message_to_client(build.started_by,
-                                           {"type": "build_completed",
-                                            "message": f"build #{build_id} completed",
-                                            "build_id": str(build_id),
-                                            "exit_code": str(exit_code)})
+    await wsManager.notify_build_result(build, f"build #{build_id} completed")
 
 
 @app.get("/tasks/{task_id}/field/{field}")

@@ -2,6 +2,8 @@ from typing import Dict
 
 from fastapi import WebSocket, WebSocketDisconnect
 
+from cimple_back.model.build import Build
+
 
 class WebSocketManager:
     def __init__(self):
@@ -23,6 +25,16 @@ class WebSocketManager:
     async def disconnect_client(self, client_id: str):
         del self.connected_clients[client_id]
         print(f"Client {client_id} disconnected")
+
+    async def notify_build_result(self, build: Build, message: str):
+        build_id = build.id
+        await self.send_message_to_client(build.started_by,
+                                          {"type": "build_completed",
+                                           "message": message,
+                                           "details": {
+                                               "build_id": str(build_id),
+                                               "exit_code": str(build.exit_code)
+                                           }})
 
     async def send_message_to_client(self, client_id: str, message: Dict):
         if client_id in self.connected_clients:

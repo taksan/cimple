@@ -6,6 +6,7 @@ import {TaskDeleteResponse} from "../model/task-delete-response";
 import {ToasterService} from "../toaster/toaster.service";
 import {Router} from "@angular/router";
 import {WebSocketService} from "../web-socket.service";
+import {BuildNotifierService} from "../build-notifier.service";
 
 @Component({
   selector: 'app-tasks',
@@ -18,16 +19,14 @@ export class TasksComponent implements OnInit {
   constructor(private taskService: TaskService,
               private toaster: ToasterService,
               private router: Router,
-              private webSocketService: WebSocketService) {
+              private webSocketService: WebSocketService,
+              private buildNotifier: BuildNotifierService) {
   }
 
   ngOnInit(): void {
     this.updateTasks();
-    this.webSocketService.messages.subscribe({
-      next: (message) => {
-        if (message.type == 'build_completed')
-          this.toaster.success("A message from the server", message.message)
-      }
+    this.webSocketService.subscribe(message => {
+      this.buildNotifier.notifyBuildCompleted(message)
     })
   }
 

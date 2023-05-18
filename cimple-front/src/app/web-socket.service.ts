@@ -1,12 +1,13 @@
 import {Injectable} from '@angular/core';
-import {map, Observable, Observer, Subject} from "rxjs";
+import {map, Observable, Observer, Subject, Subscription} from "rxjs";
 import {AnonymousSubject} from "rxjs/internal/Subject";
 import {environment} from "../environments/environment";
 import {MyIdService} from "./my-id.service";
 
-export interface Message {
-  type: string
-  message: string
+export class Message {
+  type: string = ""
+  message: string = ""
+  details: any = null
 }
 
 @Injectable({
@@ -14,7 +15,7 @@ export interface Message {
 })
 export class WebSocketService {
   private subject: AnonymousSubject<MessageEvent> | null = null;
-  public messages: Subject<Message>
+  private messages: Subject<Message>
 
   constructor(private myId: MyIdService) {
     let wsUrl = environment.backendUrl.replace('http', 'ws')
@@ -25,6 +26,10 @@ export class WebSocketService {
         }
       )
     );
+  }
+
+  public subscribe(observerOrNext?: Partial<Observer<Message>> | ((value: Message) => void) | undefined): Subscription {
+    return this.messages.subscribe(observerOrNext)
   }
 
   public connect(url: string): AnonymousSubject<MessageEvent> {

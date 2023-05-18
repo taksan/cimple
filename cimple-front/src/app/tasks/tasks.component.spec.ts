@@ -7,14 +7,23 @@ import {Router} from "@angular/router";
 import {Task} from "../model/task";
 import {of, throwError} from "rxjs";
 import {DatePipe} from '@angular/common';
+import {BuildNotifierService} from "../build-notifier.service";
+import {WebSocketService} from "../web-socket.service";
+import {WS} from "jest-websocket-mock";
+import {MyIdService} from "../my-id.service";
 
 describe('TasksComponent', () => {
+  const clientId = 'my-client-id';
+  let server: WS;
   let component: TasksComponent;
   let fixture: ComponentFixture<TasksComponent>;
   let taskService: TaskService;
   let toasterService: ToasterService;
-  let router: Router;
+  let webSocketService:WebSocketService;
+  let buildNotifierMock: BuildNotifierService
+  let myIdServiceSpy: jest.Mocked<MyIdService>;
 
+  let router: Router;
   beforeEach(async () => {
     const taskServiceMock = {
       list: jest.fn(),
@@ -27,19 +36,39 @@ describe('TasksComponent', () => {
       error: jest.fn(),
     };
 
+    server = new WS("ws://localhost:8000/ws");
+
+    const myIdServiceSpyObj = {
+      get: jest.fn()
+    };
+    myIdServiceSpy = myIdServiceSpyObj as unknown as jest.Mocked<MyIdService>;
+    myIdServiceSpy.get.mockReturnValue(clientId);
+
+    webSocketService = new WebSocketService(myIdServiceSpy)
+    await server.connected
+
+    buildNotifierMock = new BuildNotifierService(toasterServiceMock as unknown as ToasterService)
+    buildNotifierMock.notifyBuildCompleted = jest.fn()
+
+
     const routerMock = {
       navigate: jest.fn(),
     };
-
     await TestBed.configureTestingModule({
       declarations: [TasksComponent],
       providers: [
         { provide: TaskService, useValue: taskServiceMock },
         { provide: ToasterService, useValue: toasterServiceMock },
         { provide: Router, useValue: routerMock },
+        { provide: WebSocketService, useValue: webSocketService},
+        { provide: BuildNotifierService, useValue: buildNotifierMock}
       ],
     }).compileComponents();
   });
+  afterEach(() => {
+    server.close()
+    WS.clean()
+  })
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TasksComponent);
@@ -101,4 +130,20 @@ describe('TasksComponent', () => {
       expect(triggerSpy).toHaveBeenCalledWith("1")
       expect(successSpy).toHaveBeenCalledWith('Task started', "Build #0 for task 'Task 1' started");
     });
+
+    it('should invoke build notifier service when build completed message is received', async () => {
+      // @ts-ignore
+      await expect(server).toReceiveMessage(JSON.stringify({clientId: clientId}));
+      jest.spyOn(taskService, 'list').mockReturnValue(of([]));
+      fixture.detectChanges()
+
+      let msg = {
+        type: "build_completed",
+        message: "Build #0 for task 'Task 1' completed",
+        details: { build_id: 0, exit_code: 0}
+      };
+      server.send(JSON.stringify(msg))
+
+      expect(buildNotifierMock.notifyBuildCompleted).toHaveBeenCalledWith(msg)
+    })
 });

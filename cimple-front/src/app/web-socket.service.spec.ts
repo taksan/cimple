@@ -1,4 +1,3 @@
-import {TestBed} from '@angular/core/testing';
 import {WebSocketService} from './web-socket.service';
 import {MyIdService} from './my-id.service';
 import {WS} from 'jest-websocket-mock';
@@ -33,12 +32,12 @@ describe('WebSocketService', () => {
       messages.push(message)
     })
     server.send(JSON.stringify({type: "some", message: "yes"}))
-    webSocketService.messages.next({type: "hello", message: "good bye"})
-
-    // @ts-ignore
-    await expect(server).toReceiveMessage(JSON.stringify({type: "hello", message: "good bye"}));
-
     expect(messages).toEqual([{type: "some", message: "yes"}])
+
+    webSocketService.messages.next({type: "hello", message: "good bye", details: null})
+    // @ts-ignore
+    await expect(server).toReceiveMessage(JSON.stringify({type: "hello", message: "good bye", details: null}));
+
     server.close()
   });
 });
