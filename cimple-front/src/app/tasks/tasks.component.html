@@ -13,7 +13,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let task of taskList" [class]="taskClass(task)" attr.data-testid="{{ task.name }}">
+    <tr *ngFor="let task of taskList" [class]="taskClass(task)" attr.data-testid="{{ 'task-id-' + task.id }}">
       <td (click)="showBuilds(task)" class="cimple-clickable" data-testid="task-name">{{ task.name }}</td>
       <td (click)="showBuilds(task)" class="cimple-clickable" data-testid="task-created-date">
         {{ task.created | date:"dd/MM/yy hh:mm" }}

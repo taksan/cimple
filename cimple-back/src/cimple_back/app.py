@@ -116,7 +116,7 @@ async def trigger_task(task_id: int, request: Request):
 async def build_completed(task_id: int, build_id: int, exit_code: int = Query(...), file: UploadFile = File(...)):
     log_output = await file.read()
     task = task_repo.get(task_id)
-    build = task.complete(build_id, log_output, exit_code)
+    build = task.complete(build_id, log_output.decode('UTF-8'), exit_code)
     task_repo.update(task_id, task)
     EVENT_LOGGER.info(f"Task '{task.name}' build #{build_id} completed (exit code = {exit_code})")
     await wsManager.notify_build_result(build, f"build #{build_id} completed")

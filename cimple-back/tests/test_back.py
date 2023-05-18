@@ -1,3 +1,4 @@
+import json
 import os.path
 import re
 import time
@@ -178,12 +179,10 @@ def test_when_trigger_script_should_be_executed(tmp_path):
                "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' build #0 started\n" \
                "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' build #0 completed (exit code = 0)\n"
 
+        serialized_build = json.loads(json.dumps(builds[0], default=str))
         assert websocket.receive_json() == {"type": "build_completed",
                                             "message": "build #0 completed",
-                                            "details": {
-                                                "build_id": "0",
-                                                "exit_code": "0"
-                                            }}
+                                            "details": serialized_build}
 
 
 @pytest.mark.timeout(1)
@@ -204,18 +203,15 @@ def test_when_trigger_script_fails_to_start_sends_notification(tmp_path):
         trigger_data = response.json()
         assert trigger_data == {'taskId': 1, 'buildNumber': 0, 'task': 'a task'}
 
-        assert websocket.receive_json() == {"type": "build_completed",
-                                            "message": "build #0 failed to start",
-                                            "details": {
-                                                "build_id": "0",
-                                                "exit_code": "127"
-                                            }}
-        response = client.get("/tasks/1")
-        assert response.status_code == 200
-        builds = response.json()['builds']
-        actual = re.sub(f".*{re.escape(task_executor)}", os.environ['TASK_EXECUTOR'], builds[0]['output'].strip())
+        build_result = websocket.receive_json()
+        build = client.get("/tasks/1").json()['builds'][0]
+        assert build_result == {"type": "build_completed",
+                                "message": "build #0 failed to start",
+                                "details": build}
+
+        actual = re.sub(f".*{re.escape(task_executor)}", os.environ['TASK_EXECUTOR'], build['output'].strip())
         assert actual == f"{task_executor}: not found"
-        assert builds[0]['exit_code'] == 127
+        assert build['exit_code'] == 127
 
 
 def test_websocket_endpoint():

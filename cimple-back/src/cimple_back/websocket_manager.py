@@ -1,3 +1,4 @@
+import json
 from typing import Dict
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -27,14 +28,11 @@ class WebSocketManager:
         print(f"Client {client_id} disconnected")
 
     async def notify_build_result(self, build: Build, message: str):
-        build_id = build.id
+        serialized_build = json.loads(json.dumps(build.dict(), default=str))
         await self.send_message_to_client(build.started_by,
                                           {"type": "build_completed",
                                            "message": message,
-                                           "details": {
-                                               "build_id": str(build_id),
-                                               "exit_code": str(build.exit_code)
-                                           }})
+                                           "details": serialized_build})
 
     async def send_message_to_client(self, client_id: str, message: Dict):
         if client_id in self.connected_clients:

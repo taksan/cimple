@@ -11,6 +11,7 @@ import {BuildNotifierService} from "../build-notifier.service";
 import {WebSocketService} from "../web-socket.service";
 import {WS} from "jest-websocket-mock";
 import {MyIdService} from "../my-id.service";
+import {Build} from "../model/build";
 
 describe('TasksComponent', () => {
   const clientId = 'my-client-id';
@@ -84,7 +85,6 @@ describe('TasksComponent', () => {
         new Task(null, 'Task 2', null, null, '', '10', '0.1', new Date())
       ];
       jest.spyOn(taskService, 'list').mockReturnValue(of(tasks));
-
       component.updateTasks();
       fixture.detectChanges()
 
@@ -117,33 +117,44 @@ describe('TasksComponent', () => {
         new Task("1", 'Task 1', null, null, '', '10', '0.1'),
         new Task("2", 'Task 2', null, null, '', '10', '0.1')
       ];
+      jest.spyOn(taskService, 'list').mockReturnValue(of(tasks));
+      component.updateTasks();
+      fixture.detectChanges();
 
       const successSpy = jest.spyOn(toasterService, 'success');
-      jest.spyOn(taskService, 'list').mockReturnValue(of(tasks));
       let triggerSpy = jest.spyOn(taskService, 'trigger');
       triggerSpy.mockReturnValue(of({task: "Task 1", buildNumber: "0"}))
-      component.updateTasks();
-      fixture.detectChanges()
 
-      fixture.nativeElement.querySelector('tr[data-testid="Task 1"] a[title="run"]').click()
+      fixture.nativeElement.querySelector('tr[data-testid="task-id-1"] a[title="run"]').click()
 
       expect(triggerSpy).toHaveBeenCalledWith("1")
       expect(successSpy).toHaveBeenCalledWith('Task started', "Build #0 for task 'Task 1' started");
     });
 
     it('should invoke build notifier service when build completed message is received', async () => {
+      const tasks: Task[] = [
+        new Task("1", 'Task 1', null, null, '', '10', '0.1'),
+        new Task("2", 'Task 2', null, null, '', '10', '0.1')
+      ];
+      jest.spyOn(taskService, 'list').mockReturnValue(of(tasks));
+      component.updateTasks();
+      fixture.detectChanges()
+
       // @ts-ignore
       await expect(server).toReceiveMessage(JSON.stringify({clientId: clientId}));
       jest.spyOn(taskService, 'list').mockReturnValue(of([]));
-      fixture.detectChanges()
 
       let msg = {
         type: "build_completed",
         message: "Build #0 for task 'Task 1' completed",
-        details: { build_id: 0, exit_code: 0}
+        details: new Build({ id: 0, exit_code: 127, task_id: 1})
       };
       server.send(JSON.stringify(msg))
 
       expect(buildNotifierMock.notifyBuildCompleted).toHaveBeenCalledWith(msg)
+      fixture.detectChanges()
+
+      let task1Row = fixture.nativeElement.querySelector('tr[data-testid="task-id-1"]');
+      expect(task1Row.classList).toContain('table-danger')
     })
 });

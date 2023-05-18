@@ -8,6 +8,17 @@ export class Build {
   finished: Date | null | undefined
   started_by: string = ''
 
+  public constructor(init?: Partial<Build>) {
+    this.task_id = init?.task_id;
+    this.id = init?.id;
+    this.output = init?.output;
+    this.status = init?.status || "started";
+    this.exit_code = init?.exit_code;
+    this.created = init?.created;
+    this.finished = init?.finished;
+    this.started_by = init?.started_by || "";
+  }
+
   public execStatus(): "running" | "succeeded" | "failed" {
     if (this.exit_code === null || this.exit_code === undefined)
       return "running";

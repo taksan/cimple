@@ -14,7 +14,7 @@ class Build(BaseModel):
     status: str = 'started'
     exit_code: Optional[int] = None
     created: str
-    finished: Optional[datetime] = None
+    finished: Optional[str] = None
     started_by: str
 
     def __init__(self, **data):
@@ -40,4 +40,4 @@ class Build(BaseModel):
     def complete(self, output, exit_code):
         self.output = output
         self.exit_code = exit_code
-        self.finished = datetime.now()
+        self.finished = datetime.now().isoformat()

@@ -7,6 +7,7 @@ import {ToasterService} from "../toaster/toaster.service";
 import {Router} from "@angular/router";
 import {WebSocketService} from "../web-socket.service";
 import {BuildNotifierService} from "../build-notifier.service";
+import {Build} from "../model/build";
 
 @Component({
   selector: 'app-tasks',
@@ -27,6 +28,9 @@ export class TasksComponent implements OnInit {
     this.updateTasks();
     this.webSocketService.subscribe(message => {
       this.buildNotifier.notifyBuildCompleted(message)
+      let updatedList = this.taskList.slice()
+      updatedList.find(task => task.id == message.details?.task_id)?.builds?.push(new Build(message.details))
+      this.taskList = updatedList
     })
   }
 
