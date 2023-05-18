@@ -41,7 +41,7 @@ describe('App', () => {
         });
 
         // Render the App component
-        const { container } = render(<App/>);
+        render(<App/>);
         await server.connected
         jest.useFakeTimers()
         server.send('{"id": 3, "date": "2023-05-14", "content": "This is a new message"}')
