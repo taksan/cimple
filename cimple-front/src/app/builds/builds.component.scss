@@ -3,8 +3,14 @@
   color: lightgray;
   padding: 1em;
 }
+.logs-header {
+  margin-bottom: 1em;
+}
 .build-list {
   margin-top: 1em;
+}
+.build-info {
+  margin-top: -1em;
 }
 
 @keyframes flash-animation {
@@ -21,4 +27,8 @@
 
 .flash {
   animation: flash-animation 1s infinite;
+}
+
+.run-button-container {
+  text-align: right;
 }

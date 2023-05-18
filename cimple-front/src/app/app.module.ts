@@ -12,6 +12,7 @@ import {BuildsComponent} from './builds/builds.component';
 import {AngularDateHttpInterceptorInterceptor} from "./utils/angular-date-http-interceptor.interceptor";
 import {MyHttpInterceptor} from "./utils/id-injector-http.interceptor";
 import {NgOptimizedImage} from "@angular/common";
+import { AvatarComponent } from './avatar/avatar.component';
 
 @NgModule({
   declarations: [
@@ -20,6 +21,7 @@ import {NgOptimizedImage} from "@angular/common";
     TaskEditorComponent,
     ToasterComponent,
     BuildsComponent,
+    AvatarComponent,
   ],
   imports: [
     BrowserModule,

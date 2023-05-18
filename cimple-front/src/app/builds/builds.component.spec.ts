@@ -103,6 +103,12 @@ describe('BuildsComponent', () => {
 
     // Assert the build output is correctly displayed
     expect(buildOutput.textContent).toContain('output');
+    let buildInfo = fixture.nativeElement.querySelector("[data-testid='build-info']").textContent
+    let datePipe = new DatePipe("en-US")
+    expect(buildInfo).toContain("Started by: Shelly")
+    expect(buildInfo).toContain("Build started: " + datePipe.transform(build.created, 'dd/MM/yy hh:mm'));
+    expect(buildInfo).toContain("Finished: " + datePipe.transform(build.finished, 'dd/MM/yy hh:mm'));
+    expect(buildInfo).toContain("Elapsed: 20000 ms");
   });
 
   it('should return the correct class for a build', () => {
@@ -213,16 +219,20 @@ describe('BuildsComponent', () => {
     return new Task("1", 'Task 1', null, null, '', '10', '0.1')
   }
   function oneBuild(id: number, output: string, execStatus: "running" | "succeeded" | "failed") : Build {
+    let created = new Date()
+    let finished = new Date(created.getTime() + 20000)
+    console.log(created)
+    console.log(finished)
     return new Build({
         id: id,
-        finished: new Date(),
+        created: created,
+        finished: finished,
         output: output,
-        execStatus: () => execStatus,
-        created: undefined,
         exit_code: undefined,
         status: "",
         task_id: 1,
-        started_by: ''
-      })
+        started_by: 'Shelly',
+        execStatus: () => execStatus
+    })
   }
 });

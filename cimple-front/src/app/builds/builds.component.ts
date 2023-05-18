@@ -78,4 +78,9 @@ export class BuildsComponent implements OnInit {
     if (taskId)
       this.taskService.trigger(taskId).subscribe()
   }
+
+  duration(selectedBuild: Build | null | undefined) {
+    if (!selectedBuild || selectedBuild.finished == null || selectedBuild.created == null) return
+    return selectedBuild.finished?.getTime() - selectedBuild.created.getTime()
+  }
 }

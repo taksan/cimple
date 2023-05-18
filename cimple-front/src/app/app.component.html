@@ -5,8 +5,8 @@
      <title>Logout</title>
    </circle>
   </svg>
-  <img alt="{{clientId}}" title="Logged in User" width="64" height="64"
-       ngSrc="https://api.dicebear.com/6.x/adventurer/svg?seed={{clientId}}">
+  <app-avatar [who]="clientId" [size]="64" titlePattern="Logged in User"></app-avatar>
+
   <span>{{clientId}}</span>
 </div>
 
