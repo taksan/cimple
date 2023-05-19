@@ -3,16 +3,17 @@ services:
   cimple-back:
     image: cimple-back
     ports:
-      - 8000:8000
+      - 8002:8000
     environment:
       - STORE_URL=http://cimple-store:8001
       - STORE_PASS=${STORE_PASS}
       - STORE_USER=${STORE_USER}
-      - AUDIT_LOG_FILE=/app/log/audit_events.log
+      - AUDIT_LOG_FILE=/app/logs/audit_events.log
     depends_on:
       - cimple-store
+      - change-vol-ownership
     volumes:
-      - back-collector:/app/log/
+      - back-collector:/app/logs/
 
   cimple-eviewer-collector:
     image: cimple-eviewer-collector
@@ -31,19 +32,32 @@ services:
       - STORE_USER=${STORE_USER}
       - DB_FILE=/app/data/tasks.json
     volumes:
-      - ./cimple-store-data:/app/data
+      - storedb:/app/data
+    depends_on:
+      - change-vol-ownership
 
   cimple-front:
     image: cimple-front
     ports:
-      - 8080:80
+      - 8090:80
     environment:
-      - BACKEND_URL=http://localhost:8000
+      - BACKEND_URL=http://localhost:8002
 
   cimple-eviewer:
     image: cimple-eviewer
     ports:
-      - 5000:5000
+      - 8003:5000
+
+  change-vol-ownership:
+    image: alpine
+    user: "root"
+    group_add:
+      - '1000'
+    volumes:
+      - back-collector:/tmp/collector
+      - storedb:/tmp/storedb
+    command: chown -R 1000:1000 /tmp/collector /tmp/storedb
 
 volumes:
   back-collector:
+  storedb:
