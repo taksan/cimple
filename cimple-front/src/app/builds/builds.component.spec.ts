@@ -12,6 +12,7 @@ import {WebSocketService} from "../web-socket.service";
 import {WS} from "jest-websocket-mock";
 import {MyIdService} from "../my-id.service";
 import {BuildNotifierService} from "../build-notifier.service";
+import {AvatarComponent} from "../avatar/avatar.component";
 
 describe('BuildsComponent', () => {
   let component: BuildsComponent;
@@ -44,7 +45,7 @@ describe('BuildsComponent', () => {
     buildNotifierMock.notifyBuildCompleted = jest.fn()
 
     await TestBed.configureTestingModule({
-      declarations: [BuildsComponent],
+      declarations: [BuildsComponent, AvatarComponent],
       providers: [
         {provide: TaskService, useValue: taskServiceMock},
         {provide: ToasterService, useValue: toasterServiceMock},
