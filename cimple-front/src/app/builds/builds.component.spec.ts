@@ -74,7 +74,7 @@ describe('BuildsComponent', () => {
 
     expect(component).toBeTruthy();
     expect(component.currentTask).toEqual(mockTask);
-    expect(taskService.get).toHaveBeenCalledWith(1);
+    expect(taskService.get).toHaveBeenCalledWith("1");
   });
 
   it('should handle error when loading task', () => {
@@ -192,20 +192,23 @@ describe('BuildsComponent', () => {
     component.currentTask = task;
     task.builds = builds;
     fixture.detectChanges();
+    const now = new Date()
 
     let thisBuild = {
       type: "build_completed",
       message: "Build #2 for task 'Task 1' completed",
-      details: new Build({id: 2, exit_code: 127, task_id: 1})
+      details: {id: 2, exit_code: 127, task_id: 1, finished: now.toISOString()}
     };
     server.send(JSON.stringify(thisBuild))
 
     let notThisBuild = {
       type: "build_completed",
-      message: "Build #1 for task 'Some other task' completed",
+      message: "Build #2 for task 'Some other task' completed",
       details: new Build({id: 2, exit_code: 127, task_id: 2})
     };
     server.send(JSON.stringify(notThisBuild))
+    // @ts-ignore
+    thisBuild.details.finished = now
     // @ts-ignore
     expect(buildNotifierMock.notifyBuildCompleted.mock.calls).toEqual([[thisBuild]])
 
@@ -213,6 +216,14 @@ describe('BuildsComponent', () => {
     const build1 = fixture.debugElement.query(By.css('tr[data-testid="build-2"]')).nativeElement;
     expect(build1.querySelector("[data-testid='status']").textContent.trim()).toBe("failed");
     expect(build1.classList).toContain("flash")
+    if (!component.currentTask) throw new Error("currentTask should not be null")
+    if (!component.currentTask.builds) throw new Error("component.currentTask.builds should not be null")
+    let addedBuild = component.currentTask.builds[component.currentTask.builds.length-1]
+    expect(addedBuild.id).toBe(2)
+    expect(addedBuild.exit_code).toBe(127)
+    expect(addedBuild.task_id).toBe(1)
+    expect(addedBuild.finished).toEqual(now)
+    expect(addedBuild.execStatus()).toBe("failed")
   });
 
   function oneTask() {
@@ -221,8 +232,6 @@ describe('BuildsComponent', () => {
   function oneBuild(id: number, output: string, execStatus: "running" | "succeeded" | "failed") : Build {
     let created = new Date()
     let finished = new Date(created.getTime() + 20000)
-    console.log(created)
-    console.log(finished)
     return new Build({
         id: id,
         created: created,

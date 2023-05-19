@@ -6,6 +6,7 @@ import {Task} from "../model/task";
 import {ToasterService} from "../toaster/toaster.service";
 import {BuildNotifierService} from "../build-notifier.service";
 import {WebSocketService} from "../web-socket.service";
+import {DateUtils} from "../utils/date-utils";
 
 @Component({
   selector: 'app-builds',
@@ -74,7 +75,6 @@ export class BuildsComponent implements OnInit {
 
   build() {
     let taskId = this.currentTask?.id
-    console.log('build happens')
     if (taskId)
       this.taskService.trigger(taskId).subscribe()
   }

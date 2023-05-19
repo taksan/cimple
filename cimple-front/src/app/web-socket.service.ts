@@ -3,6 +3,7 @@ import {map, Observable, Observer, Subject, Subscription} from "rxjs";
 import {AnonymousSubject} from "rxjs/internal/Subject";
 import {environment} from "../environments/environment";
 import {MyIdService} from "./my-id.service";
+import {DateUtils} from "./utils/date-utils";
 
 export class Message {
   type: string = ""
@@ -22,7 +23,7 @@ export class WebSocketService {
     this.messages = <Subject<Message>>this.connect(`${wsUrl}/ws`).pipe(
       map(
         (response: MessageEvent): Message => {
-          return JSON.parse(response.data)
+          return DateUtils.convertDateFields(JSON.parse(response.data))
         }
       )
     );
