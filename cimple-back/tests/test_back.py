@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from cimple_back.app import app
+from cimple_back.back import server, task_repo
 
 
 class WebSocketServer:
@@ -24,12 +24,11 @@ class CustomTestClient(TestClient):
         return super().request(*args, **kwargs)
 
 
-client = CustomTestClient(app)
+client = CustomTestClient(server)
 
 
 @pytest.fixture(autouse=True)
 def cleanup_repo(tmp_path):
-    from cimple_back.app import task_repo
     audit_log_file = os.environ["AUDIT_LOG_FILE"]
     if os.path.exists(audit_log_file):
         os.truncate(audit_log_file, 0)

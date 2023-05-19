@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from cimple_store.app import app, items_repo
+from cimple_store.store import app, items_repo
 from fastapi.testclient import TestClient
 
 client = TestClient(app)

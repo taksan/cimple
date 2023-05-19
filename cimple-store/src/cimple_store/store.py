@@ -1,49 +1,91 @@
-import json
+import base64
+import logging
 import os
+from typing import Dict
+
+from fastapi import FastAPI, Request, Response, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from .repo import Repo
+
+DB_FILE = os.environ.get("DB_FILE", "data/tasks.json")
+
+items_repo = Repo(DB_FILE)
+app = FastAPI()
 
 
-class Repo:
-    def __init__(self, file: str):
-        self.repo = None
-        self.index = None
-        self.filename = file
-        if os.path.exists(file):
-            self.init_from_file(file)
-        else:
-            self.reset()
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    logging.error(f"{request}: {exc_str}")
+    content = {'status_code': 10422, 'message': exc_str, 'data': None}
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    def reset(self):
-        self.index = 0
-        self.repo = {}
 
-    def init_from_file(self, file):
-        with open(file, "r") as f:
-            self.repo = json.load(f)
-            self.index = max([int(k) for k in self.repo.keys()])
+def authenticate(username, password):
+    correct_username = os.environ.get("STORE_USER")
+    correct_password = os.environ.get("STORE_PASS")
+    if username == correct_username and password == correct_password:
+        return True
+    return False
 
-    def list(self):
-        return self.repo
 
-    def save(self):
-        with open(self.filename, "w") as f:
-            f.write(json.dumps(self.repo))
+@app.middleware("http")
+async def basic_auth_middleware(request: Request, call_next):
+    auth = request.headers.get("Authorization")
+    if auth is None:
+        return Response(status_code=401, content="No credentials provided")
+    if not auth.startswith("Basic "):
+        return Response(status_code=401, content="Invalid authentication mode")
 
-    def __iadd__(self, value):
-        self.index += 1
-        value['id'] = self.index
-        self[str(self.index)] = value
-        return self
+    username, password = base64.b64decode(auth.split(" ")[1]).decode('utf-8').split(":")
+    if not authenticate(username, password):
+        return Response(status_code=401, content="Invalid credentials")
 
-    def __setitem__(self, key, value):
-        self.repo[str(key)] = value
-        self.save()
+    response = await call_next(request)
+    return response
 
-    def __getitem__(self, key):
-        return self.repo[str(key)]
 
-    def __contains__(self, key):
-        return str(key) in self.repo
+@app.get("/items")
+async def get_items():
+    global items_repo
+    return items_repo.list()
 
-    def __delitem__(self, key):
-        del self.repo[str(key)]
-        self.save()
+
+@app.post("/items")
+async def create_item(item: Dict):
+    global items_repo
+    items_repo += item
+    logging.info(f"New item {item['id']} created")
+
+    return item
+
+
+@app.get("/items/{item_id}")
+async def get_task(item_id: str):
+    global items_repo
+    if item_id not in items_repo:
+        return Response(status_code=404)
+
+    return items_repo[item_id]
+
+
+@app.put("/items/{item_id}")
+async def update_task(item_id: str, updated_item: Dict):
+    global items_repo
+    if item_id not in items_repo:
+        return Response(status_code=404)
+
+    updated_item['id'] = item_id
+    items_repo[item_id] = updated_item
+    logging.info(f"Item {item_id} updated")
+
+
+@app.delete("/items/{item_id}")
+async def delete_task(item_id: str):
+    global items_repo
+    if item_id not in items_repo:
+        return Response(status_code=404)
+    del items_repo[item_id]
+    logging.info(f"Item {item_id} removed")
