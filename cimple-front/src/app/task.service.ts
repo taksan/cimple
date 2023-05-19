@@ -27,12 +27,12 @@ export class TaskService {
       .pipe(map(t => Task.from(t)))
   }
 
-  public get(id: number) {
+  public get(id: string) {
     return this.http.get<Task>(`${environment.backendUrl}/tasks/${id}`)
       .pipe(map(t => Task.from(t)))
   }
 
-  public update(id: number, task: Task): Observable<Task> {
+  public update(id: string, task: Task): Observable<Task> {
     return this.http.put<Task>(`${environment.backendUrl}/tasks/${id}`, task)
       .pipe(map(t => Task.from(t)))
   }

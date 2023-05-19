@@ -20,7 +20,10 @@ export class TaskEditorComponent implements OnInit {
     cpu: new FormControl('0.1'),
   })
   title = "Task Creation"
-  currentTaskId: number | null = null
+  currentTaskId: string | null = null
+
+  private originalTask: Task | null = null;
+
   constructor(private taskService: TaskService,
               private router: Router,
               private route: ActivatedRoute,
@@ -35,6 +38,7 @@ export class TaskEditorComponent implements OnInit {
       this.title = "Task Update"
       this.taskService.get(params['id']).subscribe(task => {
         this.taskForm.patchValue(task)
+        this.originalTask = task
       })
     })
   }
@@ -43,23 +47,30 @@ export class TaskEditorComponent implements OnInit {
       this.taskForm.markAllAsTouched()
       return
     }
-    let task: Task = new Task(null, this.taskForm.get('name')?.value || '', this.taskForm.get('image')?.value || '', this.taskForm.get('schedule')?.value || '', this.taskForm.get('script')?.value || '', this.taskForm.get('memory')?.value || '', this.taskForm.get('cpu')?.value || '')
+    let task: Task = new Task(this.currentTaskId,
+      this.taskForm.get('name')?.value || '',
+      this.taskForm.get('image')?.value || '',
+      this.taskForm.get('schedule')?.value || '',
+      this.taskForm.get('script')?.value || '',
+      this.taskForm.get('memory')?.value || '',
+      this.taskForm.get('cpu')?.value || '')
     if (this.currentTaskId) {
+      task.builds = this.originalTask?.builds
       this.taskService.update(this.currentTaskId, task).subscribe( {
         next: _r => this.router.navigate(['/']).then(),
         error: e => {
           this.toaster.error('Update failed', e.message)
         }
       })
+      return;
     }
-    else {
-      this.taskService.create(task).subscribe( {
-        next: _r => this.router.navigate(['/']).then(),
-        error: e => {
-          this.toaster.error('Creation failed', e.message)
-        }
-      })
-    }
+
+    this.taskService.create(task).subscribe( {
+      next: _r => this.router.navigate(['/']).then(),
+      error: e => {
+        this.toaster.error('Creation failed', e.message)
+      }
+    })
   }
 
   classFor(field: string) {

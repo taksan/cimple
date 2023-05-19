@@ -62,7 +62,7 @@ describe('TaskService', () => {
   it('should update given new task', () => {
     const mockTask = new Task("1", 'Task 1', null, "", '10', '0.1')
 
-    service.update(1, mockTask).subscribe((task: Task) => {
+    service.update("1", mockTask).subscribe((task: Task) => {
       expect(task).toEqual(mockTask);
     });
 

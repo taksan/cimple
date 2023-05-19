@@ -11,7 +11,7 @@ export class Task {
   memory: string= "10"
   cpu: string = "0.1"
 
-  constructor(id: string | null = null,
+  constructor(id: string | null | undefined = null,
               name: string = "",
               image: string | null = null,
               schedule: string | null = null,
@@ -23,7 +23,7 @@ export class Task {
     this.image = image
     this.schedule = schedule
     this.script = script
-    this.memory = memory+"Mi"
+    this.memory = memory
     this.cpu = cpu
     this.created = created
   }

@@ -7,6 +7,7 @@ import {ToasterService} from "../toaster/toaster.service";
 import {of} from "rxjs";
 import {ReactiveFormsModule} from "@angular/forms";
 import {Task} from "../model/task";
+import {Build} from "../model/build";
 
 describe('TaskCreateComponent', () => {
   let component: TaskEditorComponent;
@@ -39,10 +40,10 @@ describe('TaskCreateComponent', () => {
       declarations: [TaskEditorComponent],
       imports: [ReactiveFormsModule],
       providers: [
-        { provide: TaskService, useValue: taskServiceMock },
-        { provide: Router, useValue: routerMock },
-        { provide: ToasterService, useValue: toasterMock },
-        { provide: ActivatedRoute, useValue: activatedRouteMock },
+        {provide: TaskService, useValue: taskServiceMock},
+        {provide: Router, useValue: routerMock},
+        {provide: ToasterService, useValue: toasterMock},
+        {provide: ActivatedRoute, useValue: activatedRouteMock},
       ],
     }).compileComponents();
   });
@@ -60,42 +61,54 @@ describe('TaskCreateComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('ngOnInit', () => {
-    it('should set title to "Task Creation" by default', () => {
-      fixture.detectChanges();
-      expect(component.title).toBe('Task Creation');
-    });
-
-    it('should set title to "Task Update" and load task data when id is provided in route params', () => {
-      const taskId = 1;
-      const task: Task = new Task("1", 'Test task', '', 'echo "Hello, world!"', '50', '0.1');
-      jest.spyOn(taskService, 'get').mockReturnValue(of(task));
-      activatedRoute.params = of({ id: taskId });
-
-      fixture.detectChanges();
-
-      expect(component.title).toBe('Task Update');
-      expect(component.currentTaskId).toBe(taskId);
-      expect(component.taskForm.get('name')?.value).toBe(task.name);
-      expect(component.taskForm.get('image')?.value).toBe(task.image);
-      expect(component.taskForm.get('schedule')?.value).toBe(task.schedule);
-      expect(component.taskForm.get('script')?.value).toBe(task.script);
-      expect(component.taskForm.get('memory')?.value).toBe(task.memory);
-      expect(component.taskForm.get('cpu')?.value).toBe(task.cpu);
-      expect(taskService.get).toHaveBeenCalledWith(taskId);
-    });
+  it('should set title to "Task Creation" by default', () => {
+    fixture.detectChanges();
+    expect(component.title).toBe('Task Creation');
   });
 
-  describe('onSubmit', () => {
-    it('should do nothing if task form is invalid', () => {
-      fixture.detectChanges();
-      component.taskForm.setErrors({invalid: true});
+  it('should set title to "Task Update" and load task data when id is provided in route params', () => {
+    const taskId = "1";
+    const task: Task = new Task("1", 'Test task', '', 'echo "Hello, world!"', '50', '0.1');
+    jest.spyOn(taskService, 'get').mockReturnValue(of(task));
+    activatedRoute.params = of({id: taskId});
 
-      component.onSubmit();
+    fixture.detectChanges();
 
-      expect(taskService.create).not.toHaveBeenCalled();
-      expect(taskService.update).not.toHaveBeenCalled();
-      expect(router.navigate).not.toHaveBeenCalled();
-    });
-  })
+    expect(component.title).toBe('Task Update');
+    expect(component.currentTaskId).toBe(taskId);
+    expect(component.taskForm.get('name')?.value).toBe(task.name);
+    expect(component.taskForm.get('image')?.value).toBe(task.image);
+    expect(component.taskForm.get('schedule')?.value).toBe(task.schedule);
+    expect(component.taskForm.get('script')?.value).toBe(task.script);
+    expect(component.taskForm.get('memory')?.value).toBe(task.memory);
+    expect(component.taskForm.get('cpu')?.value).toBe(task.cpu);
+    expect(taskService.get).toHaveBeenCalledWith(taskId);
+  });
+
+  it('should update task when existing task is submitted', () => {
+    const taskId = "1";
+    const task: Task = new Task("1", 'Test task', '', 'echo "Hello, world!"', '50', '0.1');
+    task.builds = [ new Build({task_id: 1, id: 0, created: new Date()})]
+    jest.spyOn(taskService, 'get').mockReturnValue(of(task));
+    activatedRoute.params = of({id: taskId});
+    jest.spyOn(taskService, 'update').mockReturnValue(of(task));
+
+    fixture.detectChanges();
+    component.taskForm.get('name')?.setValue('New task name');
+    component.onSubmit()
+    const updatedTask = Object.assign(new Task(), task)
+    updatedTask.name = 'New task name'
+    expect(taskService.update).toHaveBeenCalledWith(taskId, updatedTask);
+  });
+
+  it('should do nothing if task form is invalid', () => {
+    fixture.detectChanges();
+    component.taskForm.setErrors({invalid: true});
+
+    component.onSubmit();
+
+    expect(taskService.create).not.toHaveBeenCalled();
+    expect(taskService.update).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
 });
