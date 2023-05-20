@@ -17,7 +17,7 @@ def main():
     events_file = os.environ.get("EVENTS_FILE", "audit.log")
     target = os.environ.get('CIMPLE_COLLECTOR_PEER_URL', None)
     if not target:
-        raise ValueError("CIMPLE_COLLECTOR_PEER_URL is not set")
+        raise ValueError("CIMPLE_COLLECTOR_PEER_URL must be set")
     watch_file(events_file, send_data_to_remote)
     asyncio.get_event_loop().run_forever()
 

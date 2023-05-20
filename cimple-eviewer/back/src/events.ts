@@ -1,4 +1,5 @@
 import express from 'express';
+import { Event } from './event';
 
 export const eventsRouter = express.Router();
 
@@ -6,6 +7,7 @@ let events: Event[] = []
 let eventsWs: WebSocket|null = null
 
 eventsRouter.get('/api/events', (req , res) => {
+  // @ts-ignore
   res.json(events)
 });
 
@@ -17,6 +19,7 @@ eventsRouter.post('/api/events', (req , res) => {
   event.id = events.length
   eventsWs?.send(JSON.stringify( event))
 
+  // @ts-ignore
   res.json({success: true, event: event})
 })
 

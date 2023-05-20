@@ -10,8 +10,8 @@ describe('App', () => {
         jest.spyOn(window, 'fetch').mockResolvedValueOnce({
             json: () =>
                 Promise.resolve([
-                    {id: 1, date: '2023-05-14', content: 'Event 1'},
-                    {id: 2, date: '2023-05-15', content: 'Event 2'},
+                    {id: 1, date: '2023-05-14', content: 'Event 1', environment: 'dev'},
+                    {id: 2, date: '2023-05-15', content: 'Event 2', environment: 'prod'},
                 ]),
         });
 
@@ -20,8 +20,10 @@ describe('App', () => {
 
         // Wait for the fetch and event rendering to complete
         await waitFor(() => {
-            expect(screen.getByText('Event 1')).toBeInTheDocument();
-            expect(screen.getByText('Event 2')).toBeInTheDocument();
+            expect(screen.getByTestId('event-1-content')).toHaveTextContent("Event 1")
+            expect(screen.getByTestId('event-2-content')).toHaveTextContent("Event 2")
+            expect(screen.getByTestId('event-1-environment')).toHaveTextContent("dev")
+            expect(screen.getByTestId('event-2-environment')).toHaveTextContent("prod")
         });
 
         // Verify that the fetch function was called with the correct URL
@@ -35,8 +37,8 @@ describe('App', () => {
         jest.spyOn(window, 'fetch').mockResolvedValueOnce({
             json: () =>
                 Promise.resolve([
-                    {id: 1, date: '2023-05-14', content: 'Event 1'},
-                    {id: 2, date: '2023-05-15', content: 'Event 2'},
+                    {id: 1, date: '2023-05-14', content: 'Event 1', environment: 'dev' },
+                    {id: 2, date: '2023-05-15', content: 'Event 2', environment: 'dev'},
                 ]),
         });
 
