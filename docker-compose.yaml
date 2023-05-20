@@ -31,7 +31,7 @@ services:
       - cimple-store
       - change-vol-ownership
     volumes:
-      - back-collector:/app/logs/
+      - back-logs:/app/logs/
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
       - "traefik.enable=true"
@@ -45,7 +45,7 @@ services:
       - EVENTS_FILE=/home/appuser/log/audit_events.log
       - CIMPLE_COLLECTOR_PEER_URL=http://cimple-eviewer:5000/api/events
     volumes:
-      - back-collector:/home/appuser/log
+      - back-logs:/home/appuser/log
 
   cimple-store:
     image: cimple-store
@@ -89,10 +89,10 @@ services:
     group_add:
       - '1000'
     volumes:
-      - back-collector:/tmp/collector
+      - back-logs:/tmp/collector
       - storedb:/tmp/storedb
     command: chown -R 1000:1000 /tmp/collector /tmp/storedb
 
 volumes:
-  back-collector:
+  back-logs:
   storedb:
