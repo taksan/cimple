@@ -70,7 +70,7 @@ export class BuildsComponent implements OnInit {
       additionalClass = "table-active"
     if (build.isNew)
       additionalClass = " flash"
-    return `selectable ${additionalClass}`;
+    return `selectable cimple-clickable ${additionalClass}`;
   }
 
   build() {

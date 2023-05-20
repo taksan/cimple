@@ -4,6 +4,7 @@ import {TaskService} from "../task.service";
 import {Task} from "../model/task";
 import {ActivatedRoute, Router} from "@angular/router";
 import {ToasterService} from "../toaster/toaster.service";
+import {Location} from "@angular/common";
 
 @Component({
   selector: 'app-task-create',
@@ -27,7 +28,8 @@ export class TaskEditorComponent implements OnInit {
   constructor(private taskService: TaskService,
               private router: Router,
               private route: ActivatedRoute,
-              private toaster: ToasterService) {
+              private toaster: ToasterService,
+              private location: Location) {
   }
 
   ngOnInit() {
@@ -57,7 +59,7 @@ export class TaskEditorComponent implements OnInit {
     if (this.currentTaskId) {
       task.builds = this.originalTask?.builds
       this.taskService.update(this.currentTaskId, task).subscribe( {
-        next: _r => this.router.navigate(['/']).then(),
+        next: _r => this.location.back(),
         error: e => {
           this.toaster.error('Update failed', e.message)
         }
@@ -66,7 +68,7 @@ export class TaskEditorComponent implements OnInit {
     }
 
     this.taskService.create(task).subscribe( {
-      next: _r => this.router.navigate(['/']).then(),
+      next: _r => this.location.back(),
       error: e => {
         this.toaster.error('Creation failed', e.message)
       }
@@ -77,5 +79,9 @@ export class TaskEditorComponent implements OnInit {
     if (this.taskForm.get(field)?.invalid && this.taskForm.get(field)?.touched)
       return "form-control is-invalid"
     return "form-control"
+  }
+
+  cancel() {
+    this.location.back()
   }
 }
