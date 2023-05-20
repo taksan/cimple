@@ -1,19 +1,49 @@
 version: '3'
 services:
+  reverse-proxy:
+    image: traefik:v2.8
+    ports:
+      - "80:80"
+    command:
+      - --api.insecure=true
+      - --providers.docker
+      - --entryPoints.web.address=:80
+      - --providers.docker.exposedbydefault=false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=8080"
+      - "traefik.http.routers.traefik.service=api@internal"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      default:
+        aliases:
+          - 'front.cimple.localhost'
+          - 'eviewer.cimple.localhost'
+          - 'back.cimple.localhost'
+
   cimple-back:
     image: cimple-back
+    user: "root"
     ports:
       - 8002:8000
     environment:
       - STORE_URL=http://cimple-store:8001
-      - STORE_PASS=${STORE_PASS}
-      - STORE_USER=${STORE_USER}
+      - STORE_USER=${STORE_USER:-storeuser}
+      - STORE_PASS=${STORE_PASS:-storepass}
       - AUDIT_LOG_FILE=/app/logs/audit_events.log
+      - PYTHONPATH=/home/appuser/.local/lib/python3.11/site-packages
     depends_on:
       - cimple-store
       - change-vol-ownership
     volumes:
       - back-collector:/app/logs/
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cimple-back.rule=Host(`back.cimple.localhost`)"
+      - "traefik.http.routers.cimple-back.entrypoints=web"
+      - "traefik.http.services.cimple-back.loadbalancer.server.port=8000"
 
   cimple-eviewer-collector:
     image: cimple-eviewer-collector
@@ -41,12 +71,23 @@ services:
     ports:
       - 8090:80
     environment:
-      - BACKEND_URL=http://localhost:8002
+      - BACKEND_URL=http://back.cimple.localhost
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cimple-front.rule=Host(`front.cimple.localhost`)"
+      - "traefik.http.routers.cimple-front.entrypoints=web"
+      - "traefik.http.services.cimple-front.loadbalancer.server.port=80"
+
 
   cimple-eviewer:
     image: cimple-eviewer
     ports:
       - 8003:5000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cimple-eviewer.rule=Host(`eviewer.cimple.localhost`)"
+      - "traefik.http.routers.cimple-eviewer.entrypoints=web"
+      - "traefik.http.services.cimple-eviewer.loadbalancer.server.port=5000"
 
   change-vol-ownership:
     image: alpine
