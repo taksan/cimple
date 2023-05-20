@@ -15,12 +15,6 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      default:
-        aliases:
-          - 'front.cimple.localhost'
-          - 'eviewer.cimple.localhost'
-          - 'back.cimple.localhost'
 
   cimple-back:
     image: cimple-back
@@ -58,8 +52,8 @@ services:
     ports:
       - 8001:8001
     environment:
-      - STORE_PASS=${STORE_PASS}
-      - STORE_USER=${STORE_USER}
+      - STORE_USER=${STORE_USER:-storeuser}
+      - STORE_PASS=${STORE_PASS:-storepass}
       - DB_FILE=/app/data/tasks.json
     volumes:
       - storedb:/app/data
