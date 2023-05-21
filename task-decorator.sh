@@ -62,9 +62,12 @@ function task() {
   local ts
   local task_num
 
+  exec 200> .task-num
+  flock 200
   task_num=$(cat .task-num)
   task_num=$(((task_num+1)%COLOR_LEN))
   echo $task_num > .task-num
+  flock -u 200
   local color=${COLOR[task_num]}
 
   start=$(date +%s)
