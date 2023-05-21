@@ -54,7 +54,8 @@ export PATH=$PATH:./venv/bin
   task "cimple-eviewer-collector"
   cd cimple-eviewer-collector
   pip install --upgrade .
-  export CIMPLE_COLLECTOR_PEER_URL=http://localhost:5000
+  export CIMPLE_COLLECTOR_PEER_URL=http://localhost:5000/api/events
+  export EVENTS_FILE=../cimple-back/logs/audit_events.log
   cimple-collector
 ) &
 
