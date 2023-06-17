@@ -17,7 +17,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   cimple-back:
-    image: cimple-back
+    image: taksan/cimple-back:v1
     user: "root"
     ports:
       - 8002:8000
@@ -40,7 +40,7 @@ services:
       - "traefik.http.services.cimple-back.loadbalancer.server.port=8000"
 
   cimple-eviewer-collector:
-    image: cimple-eviewer-collector
+    image: taksan/cimple-eviewer-collector:v1
     environment:
       - EVENTS_FILE=/home/appuser/log/audit_events.log
       - CIMPLE_COLLECTOR_PEER_URL=http://cimple-eviewer:5000/api/events
@@ -48,7 +48,7 @@ services:
       - back-logs:/home/appuser/log
 
   cimple-store:
-    image: cimple-store
+    image: taksan/cimple-store:v1
     ports:
       - 8001:8001
     environment:
@@ -61,7 +61,7 @@ services:
       - change-vol-ownership
 
   cimple-front:
-    image: cimple-front
+    image: taksan/cimple-front:v1
     ports:
       - 8090:80
     environment:
@@ -74,7 +74,7 @@ services:
 
 
   cimple-eviewer:
-    image: cimple-eviewer
+    image: taksan/cimple-eviewer:v1
     ports:
       - 8003:5000
     labels:
@@ -84,7 +84,7 @@ services:
       - "traefik.http.services.cimple-eviewer.loadbalancer.server.port=5000"
 
   change-vol-ownership:
-    image: alpine
+    image: alpine:3.17.2
     user: "root"
     group_add:
       - '1000'
