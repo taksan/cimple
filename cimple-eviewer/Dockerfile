@@ -16,5 +16,6 @@ FROM node:20.1-alpine3.17
 RUN apk add --no-cache tini
 WORKDIR /app
 COPY --from=build-stage /build/back/ /app
+ADD config.json /app/config.json
 
 ENTRYPOINT ["/sbin/tini", "node", "dist/server.js"]
