@@ -19,6 +19,8 @@ export class WebSocketService {
   private messages: Subject<Message>
 
   constructor(private myId: MyIdService) {
+    if (!environment.backendUrl)
+      environment.backendUrl = window.location.href.replace(/(.*\/\/.*)\//, '$1');
     let wsUrl = environment.backendUrl.replace('http', 'ws')
     this.messages = <Subject<Message>>this.connect(`${wsUrl}/ws`).pipe(
       map(
