@@ -1,0 +1,6 @@
+To run tests:
+
+```sh
+pip install --upgrade -e ".[tests]"
+pytest
+```

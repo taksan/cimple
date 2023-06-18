@@ -5,13 +5,10 @@ import requests
 _ENVIRONMENT = None
 
 
-def send_data_to_remote(param):
-    target = os.environ.get('CIMPLE_COLLECTOR_PEER_URL', None)
-    if target is None:
-        # should raise exception
-        raise Exception("CIMPLE_COLLECTOR_PEER_URL variable must be set")
-
-    message = {"environment": get_namespace(), "content": param}
+def send_data_to_remote(target, data):
+    if not target:
+        raise Exception("Target URL is not set")
+    message = {"environment": get_namespace(), "content": data}
     print(f"will send : {message} to {target}")
     requests.post(url=target, json=message)
 
