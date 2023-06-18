@@ -21,13 +21,14 @@ RUN apk add curl
 # Create a non-root user
 RUN adduser -D appuser
 
+RUN mkdir /app
 RUN chown -R appuser:appuser /opt
+RUN chown -R appuser:appuser /app
 
 USER appuser
 
 # Set the working directory
-WORKDIR /home/appuser
-RUN mkdir /home/appuser/log
+WORKDIR /app
 
 # Copy the installed application from the builder stage
 COPY --chown="appuser:appuser" --from=builder /root/.local/lib "/home/appuser/.local/lib"
