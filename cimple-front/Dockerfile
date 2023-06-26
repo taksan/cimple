@@ -10,7 +10,7 @@ RUN yarn build
 FROM nginx:alpine
 COPY --from=build-stage /app/dist/cimple-front /usr/share/nginx/html
 COPY 30-update-base-url.sh /docker-entrypoint.d/
-COPY nginx.conf /etc/nginx/nginx.conf
 RUN chmod u+x /docker-entrypoint.d/30-update-base-url.sh
+COPY nginx.conf /etc/nginx/nginx.conf
 RUN mkdir /usr/share/nginx/html/health
 RUN echo "OK" > /usr/share/nginx/html/health/index.html
