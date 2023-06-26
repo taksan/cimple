@@ -4,9 +4,11 @@ WORKDIR /build
 COPY front front
 COPY back back
 RUN cd front && \
+    rm -rf build && \
     yarn --frozen-lockfile && \
     yarn build
 RUN cd back && \
+    rm -rf dist && \
     yarn --frozen-lockfile && \
     yarn build && \
     yarn --frozen-lockfile --production=true

@@ -17,22 +17,25 @@ if (configFile === undefined) {
     throw new Error('CONF_FILE env variable is not set')
 }
 
-if (!fs.existsSync(configFile)) {
-    throw new Error(`CONF_FILE env variable is set to ${configFile} but file does not exist`)
-}
-
-const config = require(configFile)
-const port = config.PORT || 5000;
+let config
 
 // Serve static files from the React frontend
 app.use(express.static(path.join(__dirname, './front')));
-app.use(eventsRouter)
 
-
+if (!fs.existsSync(configFile)) {
+    config = { PORT: 5000 }
+    console.error(`CONF_FILE env variable is set to ${configFile}, but that file does not exist`)
+    fs.copyFileSync(path.join(__dirname, './front/misconfigured.html'), path.join(__dirname, './front/index.html'))
+}
+else {
+    config = require(configFile)
+    app.use(eventsRouter)
+}
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, './front/index.html'));
 });
 
+const port = config.PORT || 5000;
 
 // Start the server
 app.listen(port, () => {
