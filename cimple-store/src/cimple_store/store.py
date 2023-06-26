@@ -47,6 +47,10 @@ async def basic_auth_middleware(request: Request, call_next):
     return response
 
 
+@app.get("/health")
+async def get_items():
+    return True
+
 @app.get("/items")
 async def get_items():
     global items_repo

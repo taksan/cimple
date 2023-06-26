@@ -6,6 +6,11 @@ export const eventsRouter = express.Router();
 let events: Event[] = []
 let eventsWs: WebSocket|null = null
 
+eventsRouter.get('/health', (req , res) => {
+  // @ts-ignore
+  res.json({"health": "ok"})
+});
+
 eventsRouter.get('/api/events', (req , res) => {
   // @ts-ignore
   res.json(events)

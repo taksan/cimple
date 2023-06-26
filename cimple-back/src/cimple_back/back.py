@@ -57,6 +57,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
+@server.get("/health")
+async def health():
+    return True
+
+
 @server.get("/tasks")
 async def get_tasks():
     return task_repo.list()
