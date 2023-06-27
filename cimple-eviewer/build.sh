@@ -7,6 +7,7 @@ set -euo pipefail
   npm run build
 )
 
+rm -rf back/dist
 (
   cd back
   npm run build
