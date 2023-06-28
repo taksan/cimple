@@ -28,6 +28,8 @@ RUN adduser -D appuser
 # Set the working directory
 WORKDIR /app
 COPY executor.sh .
+COPY job-executor.sh .
+
 RUN chown -R appuser:appuser /app
 
 USER appuser
