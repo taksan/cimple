@@ -39,6 +39,7 @@ function App() {
     return (
         <div className="container">
             <h1>CImple Event Viewer</h1>
+            <a href="{{FRONT_URL}}">Cimple Front</a>
             <EventTable events={events}/>
         </div>
     );

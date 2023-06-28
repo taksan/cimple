@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import expressWs from 'express-ws';
 import {config} from "./config";
+import fs from 'fs';
 const app = express();
 
 // We must attach expressWS before importing routes
@@ -29,6 +30,25 @@ app.get('*', (req, res) => {
 });
 
 const port = config.PORT || 5000;
+
+if (!process.env.FRONT_URL) 
+    throw new Error("FRONT_URL must be set")
+
+try {
+  const files = fs.readdirSync(path.join(__dirname, "./front/static/js"));
+
+  const matchingFile = files.find(file => /^main\..*$/.test(file));
+
+  if (matchingFile) {
+    const fullFilePath = path.join(__dirname, "./front/static/js/" + matchingFile)
+    const fileContent = fs.readFileSync(fullFilePath, 'utf8');
+
+    const modifiedContent = fileContent.replace("{{FRONT_URL}}", process.env.FRONT_URL || "");
+    fs.writeFileSync(fullFilePath, modifiedContent, 'utf8');
+  }
+} catch (err) {
+  console.error('Error reading directory:', err);
+}
 
 // Start the server
 app.listen(port, () => {
