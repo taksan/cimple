@@ -29,8 +29,6 @@ spec:
             - sh
             - -c
             - |
-              set -e -x
-
               # makes sure curl is installed
               apk add --no-cache curl
 
@@ -39,12 +37,9 @@ spec:
               curl -f -s http://cimple-back/tasks/$TASK_ID/field/script > task-script.sh
               chmod u+x task-script.sh
               ./task-script.sh >output.log 2>&1
+              EXIT_CODE=\$?
 
-              echo "----- output ------"
-              cat output.log
-              echo "-- end of output --"
-
-              curl -f -s -X POST -F 'file=@output.log' http://cimple-back/tasks/$TASK_ID/builds/$BUILD_ID?exit_code=$?
+              curl -f -s -X POST -F 'file=@output.log' $BACKEND_SERVICE/tasks/$TASK_ID/builds/$BUILD_ID?exit_code=\$EXIT_CODE
       restartPolicy: Never
   backoffLimit: 0
 EOF
