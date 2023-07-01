@@ -11,10 +11,10 @@ def cronjob_name_from_task(task: Task):
 
 class TaskScheduleManager:
     def __init__(self):
-        self.schedule_creator = os.environ.get("SCHEDULE_CREATOR", "")
+        self.schedule_creator = os.environ.get("SCHEDULE_CREATOR", "/app/schedule-creator.sh")
 
     def add(self, task: Task):
-        if task.schedule is None:
+        if task.schedule is None or task.schedule == "":
             return
         if self.schedule_creator == "":
             raise ValueError("SCHEDULE_CREATOR must be set")

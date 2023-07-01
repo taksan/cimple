@@ -20,7 +20,7 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 
 # Stage 2: Create a lightweight production image
 FROM python:3.11.3-alpine
-RUN apk add --no-cache bash curl docker
+RUN apk add --no-cache bash curl docker envsubst
 
 # Create a non-root user
 RUN adduser -D appuser
@@ -37,9 +37,12 @@ COPY --chown="appuser:appuser" --from=builder /tmp/kubectl /usr/local/bin/kubect
 
 USER root
 
+RUN mkdir /app/templates
+
 COPY executor.sh .
 COPY job-executor.sh .
 COPY schedule-creator.sh .
+COPY job-template.yml /app/templates
 
 RUN chown -R appuser:appuser /app
 
