@@ -3,6 +3,11 @@
 TASK_ID=$1
 BUILD_ID=$2
 TASK_IMAGE=$(curl -s http://localhost:8000/tasks/"$TASK_ID"/field/image)
+
+if [ -z "$BACKEND_SERVICE" ]; then
+  BACKEND_SERVICE="http://cimple-back"
+fi
+
 if  [ -z "$TASK_IMAGE" ]; then
   echo "Image not specified, using 'alpine' as default image"
   TASK_IMAGE=alpine
@@ -34,7 +39,7 @@ spec:
 
               echo "Running task $TASK_ID with image $TASK_IMAGE and build $BUILD_ID"
 
-              curl -f -s http://cimple-back/tasks/$TASK_ID/field/script > task-script.sh
+              curl -f -s $BACKEND_SERVICE/tasks/$TASK_ID/field/script > task-script.sh
               chmod u+x task-script.sh
               ./task-script.sh >output.log 2>&1
               EXIT_CODE=\$?

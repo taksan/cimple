@@ -7,6 +7,7 @@ def pytest_configure(config):
     os.environ['RUN_WITHOUT_DATABASE'] = 'true'
     current_script_path = os.path.dirname(os.path.abspath(__file__))
     os.environ['TASK_EXECUTOR'] = f"{current_script_path}/mock-executor.sh"
+    os.environ['SCHEDULE_CREATOR'] = f"{current_script_path}/mock-schedule-creator.sh"
 
     tmp_path_factory = TempPathFactory.from_config(config, _ispytest=True)
     tmpdir = tmp_path_factory.mktemp("cimple_back")

@@ -27,10 +27,6 @@ RUN adduser -D appuser
 
 # Set the working directory
 WORKDIR /app
-COPY executor.sh .
-COPY job-executor.sh .
-
-RUN chown -R appuser:appuser /app
 
 USER appuser
 
@@ -38,6 +34,16 @@ USER appuser
 COPY --chown="appuser:appuser" --from=builder /root/.local/lib "/home/appuser/.local/lib"
 COPY --chown="appuser:appuser" --from=builder /root/.local/bin "/home/appuser/.local/bin"
 COPY --chown="appuser:appuser" --from=builder /tmp/kubectl /usr/local/bin/kubectl
+
+USER root
+
+COPY executor.sh .
+COPY job-executor.sh .
+COPY schedule-creator.sh .
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 # Set the entrypoint command
 CMD ["/home/appuser/.local/bin/cimple-back"]

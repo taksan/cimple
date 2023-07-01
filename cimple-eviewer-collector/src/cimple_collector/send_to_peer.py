@@ -5,7 +5,7 @@ import requests
 _ENVIRONMENT = None
 
 
-def send_data_to_remote(target, data):
+def send_data_to_remote(target: str, data: str):
     if not target:
         raise Exception("Target URL is not set")
     message = {"environment": get_namespace(), "content": data}

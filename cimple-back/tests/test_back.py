@@ -65,7 +65,7 @@ def test_when_task_is_created_should_return_new_task():
     assert get_audit_logs().strip() == "[2023-05-31 21:00:00,000] INFO: [testclient] [bob] Task 'a task' created"
 
 
-def test_when_task_is_created_should_list_should_return_created_task():
+def test_when_task_is_created_list_should_return_created_task():
     created_task = create_one_task()
 
     response = client.get('/tasks')
@@ -73,7 +73,7 @@ def test_when_task_is_created_should_list_should_return_created_task():
     assert response.json() == {'1': created_task}
 
 
-def test_when_task_is_created_should_get_should_return_created_task():
+def test_when_task_is_created_get_should_return_created_task():
     created_task = create_one_task()
 
     response = client.get(f'/tasks/{created_task["id"]}')
@@ -213,6 +213,73 @@ def test_when_trigger_script_fails_to_start_sends_notification(tmp_path):
         assert build['exit_code'] == 127
 
 
+def test_when_task_is_created_with_schedule_should_create_scheduled_task(tmp_path, mocker):
+    mocked_delete = mocker.patch('cimple_back.back.taskSchedulerManager.delete')
+    mock_result_file = tmp_path / "temp.txt"
+    os.environ['SCHEDULER_MOCK_OUTPUT_FILE'] = str(mock_result_file)
+    response = client.post('/tasks',
+                           json={'name': 'a task',
+                                 'script': "ls",
+                                 'memory': '20Mi',
+                                 'cpu': '0.2',
+                                 'schedule': '* * * * *'})
+    assert response.status_code == 200
+    task_to_delete_schedule = mocked_delete.call_args.args[0]
+    assert task_to_delete_schedule.schedule == "* * * * *"
+
+    with open(mock_result_file) as f:
+        assert f.read().strip() == "task_id=1,job_schedule=* * * * *,cronjob_name=cimple-cronjob-1"
+
+
+def test_when_task_is_updated_with_schedule_should_recreate_scheduled_task(tmp_path, mocker):
+    delete_mock = mocker.patch('cimple_back.back.taskSchedulerManager.delete')
+    mock_result_file = tmp_path / "temp.txt"
+    os.environ['SCHEDULER_MOCK_OUTPUT_FILE'] = str(mock_result_file)
+    response = client.post('/tasks',
+                           json={'name': 'a task',
+                                 'script': "ls",
+                                 'memory': '20Mi',
+                                 'cpu': '0.2',
+                                 'schedule': '* * * * *'})
+    assert response.status_code == 200
+    task_to_delete_schedule = delete_mock.call_args.args[0]
+    assert task_to_delete_schedule.schedule == "* * * * *"
+
+    created_task = response.json()
+
+    created_task['schedule'] = "*/1 * * * *"
+    task_id = str(created_task["id"])
+    response = client.put(f'/tasks/{task_id}', json=created_task)
+    assert response.status_code == 200
+
+    with open(mock_result_file) as f:
+        assert f.read().strip() == "task_id=1,job_schedule=*/1 * * * *,cronjob_name=cimple-cronjob-1"
+
+    task_to_delete_schedule = delete_mock.call_args.args[0]
+    assert task_to_delete_schedule.schedule == "*/1 * * * *"
+
+
+def test_when_task_with_schedule_is_deleted_should_delete_schedule(tmp_path, mocker):
+    delete_mock = mocker.patch('cimple_back.back.taskSchedulerManager.delete')
+    mock_result_file = tmp_path / "temp.txt"
+    os.environ['SCHEDULER_MOCK_OUTPUT_FILE'] = str(mock_result_file)
+    response = client.post('/tasks',
+                           json={'name': 'a task',
+                                 'script': "ls",
+                                 'memory': '20Mi',
+                                 'cpu': '0.2',
+                                 'schedule': '* * * * *'})
+    assert response.status_code == 200
+    created_task = response.json()
+    task_id = str(created_task["id"])
+
+    response = client.delete(f'/tasks/{task_id}')
+    assert response.status_code == 200
+
+    task_to_delete_schedule = delete_mock.call_args.args[0]
+    assert task_to_delete_schedule.schedule == "* * * * *"
+
+
 def test_websocket_endpoint():
     with client.websocket_connect("/ws") as websocket:
         websocket.send_json({"clientId": "bob"})
@@ -220,8 +287,7 @@ def test_websocket_endpoint():
 
 
 def create_one_task(script='echo "happy day"'):
-    response = client.post('/tasks',
-                           json={'name': 'a task', 'script': script, 'memory': '20Mi', 'cpu': '0.2'})
+    response = client.post('/tasks', json={'name': 'a task', 'script': script, 'memory': '20Mi', 'cpu': '0.2'})
     assert response.status_code == 200
 
     return response.json()

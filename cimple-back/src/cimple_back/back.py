@@ -14,6 +14,7 @@ from .memory_repo import MemoryRepo
 from .model.task import Task
 from .remote_repo import RemoteRepo
 from .utils.log_filter_request_ip import LogFilterRequestIP
+from cimple_back.task_schedule_manager import TaskScheduleManager
 from .websocket_manager import WebSocketManager
 
 # Basic logger
@@ -39,6 +40,15 @@ server.add_middleware(
 server.add_middleware(ProxyHeadersMiddleware)
 
 wsManager = WebSocketManager()
+taskSchedulerManager = TaskScheduleManager()
+
+
+@server.on_event("startup")
+async def startup_event():
+    tasks = task_repo.list()
+    logging.info(f"Found {len(tasks)} tasks in repo, will add to scheduler manager")
+    for task in tasks.values():
+        taskSchedulerManager.add(task)
 
 
 @server.middleware("http")
@@ -69,7 +79,8 @@ async def get_tasks():
 
 @server.post("/tasks")
 async def create_task(task: Task):
-    task_repo.add(task)
+    created_task = task_repo.add(task)
+    taskSchedulerManager.add(created_task)
     EVENT_LOGGER.info(f"Task '{task.name}' created")
     return task
 
@@ -83,6 +94,7 @@ async def get_task(task_id: int):
 async def update_task(task_id: int, updated_task: Task):
     previous_task = task_repo.get(task_id)
     task_repo.update(task_id, updated_task)
+    taskSchedulerManager.add(updated_task)
     EVENT_LOGGER.info(f"Task '{previous_task.name}' updated")
 
 
@@ -90,6 +102,7 @@ async def update_task(task_id: int, updated_task: Task):
 async def delete_task(task_id: int):
     task_to_remove = task_repo.get(task_id)
     task_repo.delete(task_id)
+    taskSchedulerManager.delete(task_to_remove)
     EVENT_LOGGER.info(f"Task '{task_to_remove.name}' removed")
     return {'taskId': task_id, 'detail': 'removal succeeded'}
 

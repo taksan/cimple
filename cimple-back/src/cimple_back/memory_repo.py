@@ -21,6 +21,7 @@ class MemoryRepo:
         self.current_task_id += 1
         task.id = self.current_task_id
         self.task_list[task.id] = task
+        return task
 
     def get(self, task_id: int) -> Task:
         self.validate_task_exists(task_id)
